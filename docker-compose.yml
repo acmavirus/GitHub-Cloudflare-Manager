@@ -1,0 +1,12 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: github-cf-manager
+    ports:
+      - "8900:8900"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: always
