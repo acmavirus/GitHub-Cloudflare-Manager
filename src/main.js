@@ -66,7 +66,16 @@ const github = {
   },
 
   async fetchRepos() {
-    return this.request('/user/repos?sort=updated&per_page=100')
+    let allRepos = [];
+    let page = 1;
+    while (true) {
+      const repos = await this.request(`/user/repos?sort=updated&per_page=100&page=${page}`);
+      if (!repos || repos.length === 0) break;
+      allRepos = allRepos.concat(repos);
+      if (repos.length < 100) break;
+      page++;
+    }
+    return allRepos;
   },
 
   async createRepo(data) {
