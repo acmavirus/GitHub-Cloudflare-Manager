@@ -43,7 +43,7 @@ const state = {
   gaId: (JSON.parse(localStorage.getItem('ga_properties')) || []).find(p => p.active)?.measurementId || localStorage.getItem('google_analytics_id') || '',
   googleClientId: localStorage.getItem('google_client_id') || '',
   googleRedirectUri: localStorage.getItem('google_redirect_uri') || (window.location.origin === 'http://localhost:8900' ? 'http://localhost:8900/callback' : ''),
-  gaAccessToken: null
+  gaAccessToken: sessionStorage.getItem('ga_access_token') || null
 }
 
 // Google Analytics Integration
@@ -472,6 +472,7 @@ async function init() {
   if (accessToken && isGaAuth) {
     window.history.replaceState({}, document.title, '/')
     state.gaAccessToken = accessToken
+    sessionStorage.setItem('ga_access_token', accessToken)
     state.activeView = 'ga-properties'
     fetchAllGaAccountsAndProperties(accessToken)
   } else if (window.location.pathname === '/callback') {
@@ -547,6 +548,92 @@ const Confirm = (title, message, okText = 'OK') => {
 
     okBtn.onclick = () => cleanup(true)
     cancelBtn.onclick = () => cleanup(false)
+  })
+}
+
+// Custom GA Delete Confirm Utility
+const ConfirmGaDelete = (propName, hasToken) => {
+  return new Promise((resolve) => {
+    let overlay = document.querySelector('#ga-delete-confirm-overlay')
+    if (!overlay) {
+      overlay = document.createElement('div')
+      overlay.id = 'ga-delete-confirm-overlay'
+      overlay.className = 'confirm-overlay'
+      overlay.innerHTML = `
+        <div class="confirm-card glass-panel" style="max-width: 450px;">
+          <div class="confirm-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--error); width: 56px; height: 56px; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+            <i data-lucide="trash-2"></i>
+          </div>
+          <h2 id="ga-delete-title" style="margin-bottom: 0.5rem;">Remove GA Property</h2>
+          <p id="ga-delete-message" style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.5;"></p>
+          
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+            <button class="btn btn-outline" id="ga-delete-local" style="width: 100%; justify-content: flex-start; height: auto; padding: 0.75rem 1rem;">
+              <i data-lucide="list-x" style="color: var(--warning); flex-shrink: 0;"></i>
+              <div style="text-align: left; margin-left: 0.75rem;">
+                <div style="font-weight: 600; font-size: 0.875rem;">Remove from List Only</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-top: 0.1rem; white-space: normal;">Delete local config, keeps the property on Google Analytics.</div>
+              </div>
+            </button>
+            
+            <button class="btn btn-outline" id="ga-delete-remote" style="width: 100%; justify-content: flex-start; border-color: rgba(239, 68, 68, 0.2); color: var(--error); background: rgba(239, 68, 68, 0.05); height: auto; padding: 0.75rem 1rem;">
+              <i data-lucide="globe" style="color: var(--error); flex-shrink: 0;"></i>
+              <div style="text-align: left; margin-left: 0.75rem;">
+                <div style="font-weight: 600; font-size: 0.875rem;">Delete from Google Analytics Account</div>
+                <div style="font-size: 0.75rem; color: var(--text-dim); font-weight: normal; margin-top: 0.1rem; white-space: normal;">Soft-deletes the property from Google's servers via API.</div>
+              </div>
+            </button>
+          </div>
+          
+          <div id="ga-delete-warning-oauth" style="display: none; padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius-sm); margin-bottom: 1.5rem; text-align: left; font-size: 0.75rem; color: var(--warning); line-height: 1.4;">
+            <i data-lucide="alert-circle" style="width: 14px; height: 14px; display: inline; vertical-align: text-bottom; margin-right: 4px;"></i>
+            <strong>OAuth Token Required:</strong> You must authenticate/import via Google OAuth first to perform actual deletion from your Google account.
+          </div>
+          
+          <button class="btn btn-outline" id="ga-delete-cancel" style="width: 100%;">Cancel</button>
+        </div>
+      `
+      document.body.appendChild(overlay)
+    }
+
+    const titleEl = overlay.querySelector('#ga-delete-title')
+    const messageEl = overlay.querySelector('#ga-delete-message')
+    const localBtn = overlay.querySelector('#ga-delete-local')
+    const remoteBtn = overlay.querySelector('#ga-delete-remote')
+    const oauthWarning = overlay.querySelector('#ga-delete-warning-oauth')
+    const cancelBtn = overlay.querySelector('#ga-delete-cancel')
+
+    titleEl.textContent = `Remove GA Property`
+    messageEl.innerHTML = `How do you want to remove the property <strong>'${propName}'</strong>?`
+    
+    if (hasToken) {
+      remoteBtn.disabled = false
+      remoteBtn.style.opacity = '1'
+      remoteBtn.style.cursor = 'pointer'
+      oauthWarning.style.display = 'none'
+    } else {
+      remoteBtn.disabled = true
+      remoteBtn.style.opacity = '0.5'
+      remoteBtn.style.cursor = 'not-allowed'
+      oauthWarning.style.display = 'block'
+    }
+
+    overlay.classList.add('active')
+    if (window.lucide) {
+      window.lucide.createIcons()
+    }
+
+    const cleanup = (result) => {
+      overlay.classList.remove('active')
+      localBtn.onclick = null
+      remoteBtn.onclick = null
+      cancelBtn.onclick = null
+      resolve(result)
+    }
+
+    localBtn.onclick = () => cleanup('local')
+    remoteBtn.onclick = () => cleanup('remote')
+    cancelBtn.onclick = () => cleanup(null)
   })
 }
 
@@ -2097,6 +2184,14 @@ function SettingsView() {
 
 function GoogleAnalyticsManagerView() {
   const isConfigured = !!state.googleClientId;
+  const searchQuery = state.searchQuery || '';
+
+  const filteredProperties = state.gaProperties.filter(prop => {
+    const matchesSearch = prop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (prop.propertyId && prop.propertyId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                          prop.measurementId.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
 
   return `
     <main class="container">
@@ -2121,6 +2216,13 @@ function GoogleAnalyticsManagerView() {
         </div>
       </div>
 
+      <div class="toolbar" style="margin-bottom: 1.5rem;">
+        <div class="search-box">
+          <i data-lucide="search"></i>
+          <input type="text" id="ga-property-search" placeholder="Search properties..." value="${searchQuery}">
+        </div>
+      </div>
+
       ${state.gaProperties.length === 0 ? `
         <div class="glass-panel" style="padding: 4rem; text-align: center;">
           <i data-lucide="bar-chart-3" style="width: 48px; height: 48px; color: var(--text-dim); margin-bottom: 1.5rem;"></i>
@@ -2130,35 +2232,40 @@ function GoogleAnalyticsManagerView() {
           </p>
         </div>
       ` : `
-        <div class="cf-accounts-grid">
-          ${state.gaProperties.map(prop => {
+        <div class="repo-list">
+          ${filteredProperties.length === 0 ? `
+            <div style="padding: 3rem; text-align: center; color: var(--text-dim);">No properties match your filters.</div>
+          ` : filteredProperties.map(prop => {
             const isCurrentlyActive = state.gaId === prop.measurementId;
             return `
-              <div class="cf-account-card glass-panel" style="display: flex; flex-direction: column; justify-content: space-between; border-color: ${isCurrentlyActive ? 'var(--primary)' : 'var(--glass-border)'};">
-                <div>
-                  <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <div class="cf-badge" style="background: ${isCurrentlyActive ? 'var(--primary-glow)' : 'var(--bg-elevated)'}; color: ${isCurrentlyActive ? 'var(--primary)' : 'var(--text-muted)'};">
-                      <i data-lucide="${isCurrentlyActive ? 'activity' : 'bar-chart-2'}"></i> 
-                      ${isCurrentlyActive ? 'Tracking Active' : 'Inactive'}
+              <div class="repo-list-item glass-panel" style="padding: 1.25rem 2rem; border-color: ${isCurrentlyActive ? 'var(--primary)' : 'var(--glass-border)'}; box-shadow: ${isCurrentlyActive ? '0 0 10px var(--primary-glow)' : 'none'};">
+                <div style="display: flex; align-items: center; gap: 1.5rem; flex: 1; flex-wrap: wrap;">
+                  <span class="domain-status ${isCurrentlyActive ? 'domain-active' : 'domain-pending'}" style="margin-left: 0.5rem;"></span>
+                  <div style="flex: 1; min-width: 200px;">
+                    <div style="font-weight: 600; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
+                      ${prop.name}
+                      ${isCurrentlyActive ? '<span style="font-size: 0.65rem; background: var(--primary-glow); color: var(--primary); border: 1px solid var(--primary-glow); padding: 1px 6px; border-radius: 4px; font-weight: 600; letter-spacing: 0.05em;">ACTIVE</span>' : ''}
                     </div>
-                    <button class="btn-icon danger remove-ga-property" data-id="${prop.id}" title="Remove Property">
-                      <i data-lucide="trash-2"></i>
+                    <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                      <span>Property ID:</span>
+                      <span style="color: var(--text-muted); font-weight: 500;">${prop.propertyId || 'N/A'}</span>
+                      <span style="opacity: 0.5;">•</span>
+                      <span>Measurement ID:</span>
+                      <code style="color: var(--primary); font-family: var(--font-mono); font-size: 0.75rem;">${prop.measurementId}</code>
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
+                    <button class="btn ${isCurrentlyActive ? 'btn-outline' : 'btn-primary'} activate-ga-property" data-id="${prop.id}" data-measurement-id="${prop.measurementId}" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; height: 36px; min-width: 100px;">
+                      ${isCurrentlyActive ? 'Deactivate' : 'Set Active'}
+                    </button>
+                    <button class="btn btn-outline copy-ga-code" data-measurement-id="${prop.measurementId}" title="Copy Tracking Script" style="padding: 0; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
+                      <i data-lucide="copy" style="width: 16px; height: 16px;"></i>
+                    </button>
+                    <button class="btn-icon danger remove-ga-property" data-id="${prop.id}" title="Remove Property" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; margin: 0;">
+                      <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
                     </button>
                   </div>
-                  <h3 style="margin-top: 0.75rem;">${prop.name}</h3>
-                  <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.25rem;">
-                    <div><strong>Property ID:</strong> ${prop.propertyId || 'N/A'}</div>
-                    <div><strong>Measurement ID:</strong> <code style="color: var(--primary); font-family: var(--font-mono);">${prop.measurementId}</code></div>
-                  </div>
-                </div>
-                
-                <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
-                  <button class="btn ${isCurrentlyActive ? 'btn-outline' : 'btn-primary'} activate-ga-property" data-id="${prop.id}" data-measurement-id="${prop.measurementId}" style="flex: 1; font-size: 0.8rem; padding: 0.5rem 1rem;">
-                    ${isCurrentlyActive ? 'Deactivate' : 'Set Active'}
-                  </button>
-                  <button class="btn btn-outline copy-ga-code" data-measurement-id="${prop.measurementId}" title="Copy Tracking Script" style="padding: 0.5rem; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
-                    <i data-lucide="copy" style="width: 16px; height: 16px;"></i>
-                  </button>
                 </div>
               </div>
             `
@@ -3973,30 +4080,74 @@ function bindEvents() {
       const propToDelete = state.gaProperties.find(p => p.id === id)
       if (!propToDelete) return
 
-      const confirmed = await Confirm('Remove GA Property', `Are you sure you want to remove '${propToDelete.name}'?`, 'Remove')
-      if (confirmed) {
-        const wasActive = propToDelete.measurementId === state.gaId
-        state.gaProperties = state.gaProperties.filter(p => p.id !== id)
-        localStorage.setItem('ga_properties', JSON.stringify(state.gaProperties))
+      const hasToken = !!state.gaAccessToken
+      const action = await ConfirmGaDelete(propToDelete.name, hasToken)
+      if (!action) return
 
-        if (wasActive) {
-          if (state.gaProperties.length > 0) {
-            state.gaProperties[0].active = true
-            state.gaId = state.gaProperties[0].measurementId
-            localStorage.setItem('ga_properties', JSON.stringify(state.gaProperties))
-            localStorage.setItem('google_analytics_id', state.gaId)
-            initGoogleAnalytics(state.gaId)
-            Toast.show('Active property removed. Next property activated.')
-          } else {
-            state.gaId = ''
-            localStorage.removeItem('google_analytics_id')
-            Toast.show('GA Property removed. Analytics disabled.')
-          }
+      if (action === 'remote') {
+        const propertyId = propToDelete.propertyId
+        if (!propertyId) {
+          Toast.show('No Property ID configured. Removing from list only.', 'warning', 5000)
         } else {
-          Toast.show('GA Property removed')
+          try {
+            state.loading = true
+            render()
+            Toast.show('Soft-deleting property on Google Analytics...', 'info')
+            const res = await fetch(`https://analyticsadmin.googleapis.com/v1alpha/properties/${propertyId}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${state.gaAccessToken}`
+              }
+            })
+
+            if (!res.ok) {
+              const errText = await res.text()
+              let errDetail = ''
+              try {
+                const errJson = JSON.parse(errText)
+                errDetail = errJson.error?.message || ''
+              } catch (e) {
+                errDetail = res.statusText
+              }
+              throw new Error(`Google API returned status ${res.status}. ${errDetail}`)
+            }
+
+            Toast.show('GA Property trashed successfully!', 'success')
+          } catch (err) {
+            console.error("Failed to delete GA property remotely:", err)
+            Toast.show(`Failed to delete from Google Account: ${err.message}`, 'error', 8000)
+            state.loading = false
+            render()
+            return
+          } finally {
+            state.loading = false
+          }
         }
-        render()
       }
+
+      const wasActive = propToDelete.measurementId === state.gaId
+      state.gaProperties = state.gaProperties.filter(p => p.id !== id)
+      localStorage.setItem('ga_properties', JSON.stringify(state.gaProperties))
+
+      if (wasActive) {
+        if (state.gaProperties.length > 0) {
+          state.gaProperties[0].active = true
+          state.gaId = state.gaProperties[0].measurementId
+          localStorage.setItem('ga_properties', JSON.stringify(state.gaProperties))
+          localStorage.setItem('google_analytics_id', state.gaId)
+          initGoogleAnalytics(state.gaId)
+          Toast.show('Active property removed. Next property activated.')
+        } else {
+          state.gaId = ''
+          localStorage.removeItem('google_analytics_id')
+          Toast.show('GA Property removed. Analytics disabled.')
+        }
+      } else {
+        if (action === 'local') {
+          Toast.show('GA Property removed from list')
+        }
+      }
+      render()
     }
   })
 
@@ -4052,6 +4203,20 @@ function bindEvents() {
         .catch(() => Toast.show('Failed to copy to clipboard', 'error'))
     }
   })
+
+  // GA Property Search Filter
+  const gaPropertySearch = document.querySelector('#ga-property-search')
+  if (gaPropertySearch) {
+    gaPropertySearch.oninput = (e) => {
+      state.searchQuery = e.target.value
+      render()
+      const box = document.querySelector('#ga-property-search')
+      if (box) {
+        box.focus()
+        box.setSelectionRange(box.value.length, box.value.length)
+      }
+    }
+  }
 
   // Save Google Client ID
   const saveGoogleClientIdBtn = document.querySelector('#save-google-client-id-btn')
@@ -4154,7 +4319,7 @@ function bindEvents() {
         `client_id=${encodeURIComponent(state.googleClientId)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&response_type=token` +
-        `&scope=${encodeURIComponent('https://www.googleapis.com/auth/analytics.readonly')}` +
+        `&scope=${encodeURIComponent('https://www.googleapis.com/auth/analytics.readonly https://www.googleapis.com/auth/analytics.edit')}` +
         `&state=google-analytics-auth`
       setTimeout(() => {
         window.location.href = oauthUrl
