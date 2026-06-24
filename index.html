@@ -5,12 +5,13 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GitHub Repo Manager - Premium</title>
-  <meta name="description" content="Manage your GitHub repositories with a premium desktop-like interface." />
+  <title>GITCORE — Premium Dev & Site Management Hub</title>
+  <meta name="description" content="GITCORE is a premium CMS hub for developers: manage GitHub repositories, Cloudflare DNS, Google Analytics, IndexNow SEO, and more in one unified dashboard." />
+  <meta name="theme-color" content="#070709" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -19,14 +20,15 @@
   <div id="app"></div>
   <div id="toast-container" class="toast-container"></div>
   <div id="confirm-overlay" class="confirm-overlay">
-    <div class="confirm-card glass-panel">
-      <div class="confirm-icon"><i data-lucide="alert-triangle"></i></div>
-      <h2 id="confirm-title" style="margin-bottom: 0.5rem;">Are you sure?</h2>
-      <p id="confirm-message" style="color: var(--text-muted); margin-bottom: 2rem;">This action cannot be undone.</p>
-      <div style="display: flex; gap: 1rem; justify-content: center;">
-        <button class="btn btn-outline" id="confirm-cancel" style="flex: 1;">Cancel</button>
-        <button class="btn btn-primary" id="confirm-ok"
-          style="flex: 1; background: var(--error); color: white;">Delete</button>
+    <div class="confirm-card">
+      <div class="confirm-icon">
+        <i data-lucide="alert-triangle"></i>
+      </div>
+      <h2 id="confirm-title">Are you sure?</h2>
+      <p id="confirm-message">This action cannot be undone.</p>
+      <div class="confirm-actions">
+        <button class="btn btn-ghost" id="confirm-cancel">Cancel</button>
+        <button class="btn btn-danger" id="confirm-ok">Delete</button>
       </div>
     </div>
   </div>

@@ -43,8 +43,19 @@ const state = {
   gaId: (JSON.parse(localStorage.getItem('ga_properties')) || []).find(p => p.active)?.measurementId || localStorage.getItem('google_analytics_id') || '',
   googleClientId: localStorage.getItem('google_client_id') || '',
   googleRedirectUri: localStorage.getItem('google_redirect_uri') || (window.location.origin === 'http://localhost:8900' ? 'http://localhost:8900/callback' : ''),
-  gaAccessToken: sessionStorage.getItem('ga_access_token') || null
+  gaAccessToken: sessionStorage.getItem('ga_access_token') || null,
+  theme: localStorage.getItem('theme') || 'dark'
 }
+
+// Apply initial theme
+document.documentElement.setAttribute('data-theme', state.theme);
+
+window.toggleTheme = function() {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('theme', state.theme);
+  document.documentElement.setAttribute('data-theme', state.theme);
+  render();
+};
 
 // Google Analytics Integration
 let lastTrackedView = null;
@@ -653,47 +664,140 @@ function logout() {
 }
 
 // Components
+const VIEW_LABELS = {
+  'github': 'GitHub Repos',
+  'commits': 'Recent Commits',
+  'trending': 'Trending',
+  'cf-domains': 'Manage Domains',
+  'cf-accounts': 'CF Accounts',
+  'cf-dns': 'DNS Records',
+  'kanban': 'Kanban Board',
+  'seo-indexnow': 'IndexNow Console',
+  'seo-domainchecker': 'Domain Checker',
+  'settings': 'System Settings',
+  'ga-properties': 'GA Properties',
+}
+
+const VIEW_SECTIONS = {
+  'github': 'GitHub', 'commits': 'GitHub', 'trending': 'GitHub',
+  'cf-domains': 'Cloudflare', 'cf-accounts': 'Cloudflare', 'cf-dns': 'Cloudflare',
+  'kanban': 'Management',
+  'seo-indexnow': 'SEO', 'seo-domainchecker': 'SEO',
+  'settings': 'System',
+  'ga-properties': 'Analytics',
+}
+
 function Header() {
+  const section = VIEW_SECTIONS[state.activeView] || 'Dashboard'
+  const viewLabel = VIEW_LABELS[state.activeView] || 'Dashboard'
   return `
-    <header>
-      <div class="logo">
-        <i data-lucide="github" class="logo-icon"></i>
-        <span>GITCORE</span>
+    <nav class="topbar">
+      <div class="topbar-brand" onclick="state.activeView='github'; render();">
+        <div class="topbar-logo-icon">
+          <i data-lucide="layers" style="width:16px;height:16px;"></i>
+        </div>
+        <span class="topbar-brand-name">GITCORE</span>
       </div>
       ${state.user ? `
-        <div class="user-profile">
-          <div class="user-info">
-            <div class="username">${state.user.login}</div>
-            <div class="user-role">${state.user.bio || 'Developer'}</div>
+        <div class="topbar-breadcrumb">
+          <span class="topbar-breadcrumb-sep">/</span>
+          <span>${section}</span>
+          <span class="topbar-breadcrumb-sep">/</span>
+          <span class="topbar-breadcrumb-current">${viewLabel}</span>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-user">
+            <img src="${state.user.avatar_url}" class="topbar-avatar" alt="${state.user.login}">
+            <div>
+              <div class="topbar-username">${state.user.login}</div>
+              <div class="topbar-userrole">${state.user.bio || 'Developer'}</div>
+            </div>
           </div>
-          <img src="${state.user.avatar_url}" class="avatar" alt="Avatar">
-          <button class="btn btn-outline" id="logout-btn" style="padding: 0.5rem; margin-top: 2px;">
-            <i data-lucide="log-out" style="width: 18px; height: 18px;"></i>
+          <button class="btn-icon" onclick="window.toggleTheme()" title="Toggle Theme" style="margin-right: 8px;">
+            <i data-lucide="${state.theme === 'light' ? 'moon' : 'sun'}"></i>
+          </button>
+          <button class="btn-icon" id="logout-btn" title="Logout">
+            <i data-lucide="log-out"></i>
           </button>
         </div>
-      ` : ''}
-    </header>
+      ` : `
+        <div class="topbar-right">
+          <button class="btn-icon" onclick="window.toggleTheme()" title="Toggle Theme">
+            <i data-lucide="${state.theme === 'light' ? 'moon' : 'sun'}"></i>
+          </button>
+        </div>
+      `}
+    </nav>
   `
 }
 
 function AuthScreen() {
   return `
-    <div class="auth-container glass-panel" style="margin-top: 10vh">
-      <i data-lucide="shield-check" style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 1.5rem;"></i>
-      <h1>Secure Access</h1>
-      <p>Please enter your GitHub Personal Access Token to manage your repositories.</p>
-      
-      <div class="input-group">
-        <label>Personal Access Token</label>
-        <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxx">
+    <div class="auth-screen">
+      <div style="position:absolute; top:1.5rem; right:1.5rem; z-index:10;">
+        <button class="btn-icon" onclick="window.toggleTheme()" title="Toggle Theme">
+          <i data-lucide="${state.theme === 'light' ? 'moon' : 'sun'}"></i>
+        </button>
       </div>
-      
-      <button class="btn btn-primary" id="login-btn" style="width: 100%;">
-        Connect GitHub <i data-lucide="arrow-right"></i>
-      </button>
+      <div class="auth-brand-panel">
+        <div class="auth-brand-logo">
+          <div class="auth-brand-logo-icon"><i data-lucide="layers"></i></div>
+          <div>
+            <div class="auth-brand-name">GITCORE</div>
+            <div class="auth-brand-tagline">Premium Dev & Site Management Hub</div>
+          </div>
+        </div>
 
-      <div style="margin-top: 1.5rem; font-size: 0.75rem; color: var(--text-dim);">
-        <p>Tip: Generate a PAT with <code style="color: var(--primary)">repo</code> & <code style="color: var(--primary)">user</code> scopes.</p>
+        <div class="auth-brand-middle">
+          <h2 class="auth-brand-headline">One Hub.<br>Every Tool.</h2>
+          <p class="auth-brand-desc">Manage GitHub repositories, Cloudflare DNS, Google Analytics properties, IndexNow SEO, and site auditing — all from a single unified dashboard.</p>
+          <div class="auth-feature-list">
+            <div class="auth-feature">
+              <div class="auth-feature-icon" style="background:var(--accent-dim);color:var(--accent-light);"><i data-lucide="github" style="width:14px;height:14px;"></i></div>
+              <span>GitHub Repo Manager — bulk operations, commits, trending</span>
+            </div>
+            <div class="auth-feature">
+              <div class="auth-feature-icon" style="background:var(--cf-orange-dim);color:var(--cf-orange);"><i data-lucide="cloud" style="width:14px;height:14px;"></i></div>
+              <span>Cloudflare DNS — multi-account, bulk IP replace</span>
+            </div>
+            <div class="auth-feature">
+              <div class="auth-feature-icon" style="background:var(--ga-blue-dim);color:var(--ga-blue);"><i data-lucide="bar-chart-2" style="width:14px;height:14px;"></i></div>
+              <span>Google Analytics 4 — import & manage properties</span>
+            </div>
+            <div class="auth-feature">
+              <div class="auth-feature-icon" style="background:var(--success-dim);color:var(--success);"><i data-lucide="zap" style="width:14px;height:14px;"></i></div>
+              <span>IndexNow & Domain Checker — SEO & site auditing</span>
+            </div>
+            <div class="auth-feature">
+              <div class="auth-feature-icon" style="background:var(--warning-dim);color:var(--warning);"><i data-lucide="kanban" style="width:14px;height:14px;"></i></div>
+              <span>Kanban Board — linked to your GitHub repos</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-brand-footer">Built with ❤️ by AcmaTvirus &nbsp;•&nbsp; GITCORE v0.0.0</div>
+      </div>
+
+      <div class="auth-form-panel">
+        <div class="auth-form-box">
+          <h1 class="auth-form-title">Secure Access</h1>
+          <p class="auth-form-subtitle">Connect your GitHub account with a Personal Access Token to unlock the full dashboard.</p>
+
+          <div class="input-group">
+            <label for="token-input">Personal Access Token</label>
+            <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+          </div>
+
+          <button class="btn btn-primary" id="login-btn" style="width:100%;padding:0.75rem;font-size:0.9375rem;">
+            <i data-lucide="log-in"></i> Connect to GitHub
+          </button>
+
+          <div class="auth-tip">
+            <strong style="color:var(--text-secondary);">How to generate a PAT:</strong><br>
+            GitHub → Settings → Developer settings → Personal access tokens → <em>Tokens (classic)</em>.<br>
+            Enable <code>repo</code> and <code>user</code> scopes.
+          </div>
+        </div>
       </div>
     </div>
   `
@@ -705,59 +809,60 @@ function RepoListItem(repo) {
   const stats = state.repoStats[repoId] || { branches: '...', commits: '...' }
 
   return `
-    <div class="repo-list-item glass-panel ${isSelected ? 'selected' : ''}" data-repo-id="${repoId}">
-      <div class="repo-checkbox-container">
-        <div class="custom-checkbox ${isSelected ? 'checked' : ''}" data-repo-id="${repoId}"></div>
+    <div class="list-item ${isSelected ? 'selected' : ''}" data-repo-id="${repoId}">
+      <div class="custom-checkbox ${isSelected ? 'checked' : ''}" data-repo-id="${repoId}"></div>
+
+      <div class="list-item-icon" style="background:${repo.private ? 'var(--warning-dim)' : 'var(--accent-dim)'}; border-color:${repo.private ? 'rgba(234,179,8,0.2)' : 'rgba(99,102,241,0.2)'}; color:${repo.private ? 'var(--warning)' : 'var(--accent-light)'}">
+        <i data-lucide="${repo.fork ? 'git-fork' : 'book'}" style="width:16px;height:16px;"></i>
       </div>
-      
-      <div class="repo-info-main">
-        <div class="repo-name-box">
-          <a href="${repo.html_url}" target="_blank" class="repo-name" style="display: block; margin-bottom: 2px;">${repo.name}</a>
-          <div style="font-size: 0.7rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.5rem;">
-            ${repo.private ? '<span style="color: var(--warning)">🔒 Private</span>' : '🌐 Public'}
-            <span>•</span>
-            <span title="Owner">${repo.owner.login}</span>
-          </div>
+
+      <div class="list-item-body">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
+          <a href="${repo.html_url}" target="_blank" class="list-item-title" style="max-width:220px;">${repo.name}</a>
+          <span class="badge badge-pill ${repo.private ? 'badge-warning' : 'badge-muted'}">${repo.private ? 'Private' : 'Public'}</span>
+          ${repo.fork ? '<span class="badge badge-pill badge-muted">Fork</span>' : ''}
         </div>
-        
-        <div class="repo-meta-list">
-          <div class="meta-item">
-            <span class="lang-dot" style="background: ${getLangColor(repo.language)}"></span>
-            ${repo.language || 'Plain Text'}
-          </div>
-          <div class="meta-item" title="Branches">
-            <i data-lucide="git-branch" style="width: 14px;"></i> ${stats.branches}
-          </div>
-          <div class="meta-item" title="Commits">
-            <i data-lucide="history" style="width: 14px;"></i> ${stats.commits}
-          </div>
-          <div class="meta-item" title="Stars">
-            <i data-lucide="star" style="width: 14px;"></i> ${repo.stargazers_count}
-          </div>
-          <div class="meta-item" title="Forks">
-            <i data-lucide="git-fork" style="width: 14px;"></i> ${repo.forks_count}
-          </div>
-          <div class="meta-item" title="Last updated">
-            <i data-lucide="clock" style="width: 14px;"></i> ${new Date(repo.updated_at).toLocaleDateString()}
-          </div>
+        <div class="list-item-meta">
+          <span class="list-item-meta-unit">
+            <span class="lang-dot" style="background:${getLangColor(repo.language)}"></span>
+            ${repo.language || 'Plain text'}
+          </span>
+          <span class="list-item-meta-unit" title="Branches">
+            <i data-lucide="git-branch"></i> ${stats.branches}
+          </span>
+          <span class="list-item-meta-unit" title="Commits">
+            <i data-lucide="history"></i> ${stats.commits}
+          </span>
+          <span class="list-item-meta-unit" title="Stars">
+            <i data-lucide="star"></i> ${repo.stargazers_count}
+          </span>
+          <span class="list-item-meta-unit" title="Forks">
+            <i data-lucide="git-fork"></i> ${repo.forks_count}
+          </span>
+          <span class="list-item-meta-unit" title="Last updated">
+            <i data-lucide="clock"></i> ${new Date(repo.updated_at).toLocaleDateString()}
+          </span>
+          <span class="list-item-meta-unit" style="color:var(--text-dim);font-size:0.75rem;">
+            <i data-lucide="user"></i> ${repo.owner.login}
+          </span>
         </div>
       </div>
-      
-      <div class="repo-actions" style="margin-top: 0; padding-top: 0; border-top: none;">
+
+      <div class="list-item-actions">
         <button class="btn-icon edit-repo-btn" data-owner="${repo.owner.login}" data-name="${repo.name}" title="Rename Repository">
-          <i data-lucide="edit-3" style="width: 16px;"></i>
+          <i data-lucide="edit-3"></i>
         </button>
         <button class="btn-icon view-commits-btn" data-owner="${repo.owner.login}" data-name="${repo.name}" title="View Commits">
-          <i data-lucide="history" style="width: 16px;"></i>
+          <i data-lucide="history"></i>
         </button>
         <button class="btn-icon copy-clone-btn" data-clone-url="${repo.clone_url}" title="Copy git clone command">
-          <i data-lucide="copy" style="width: 16px;"></i>
+          <i data-lucide="copy"></i>
         </button>
         <a href="${repo.html_url}" target="_blank" class="btn-icon" title="View on GitHub">
-          <i data-lucide="external-link" style="width: 16px;"></i>
+          <i data-lucide="external-link"></i>
         </a>
         <button class="btn-icon danger delete-repo-btn" data-owner="${repo.owner.login}" data-name="${repo.name}" title="Delete">
-          <i data-lucide="trash-2" style="width: 16px;"></i>
+          <i data-lucide="trash-2"></i>
         </button>
       </div>
     </div>
@@ -774,156 +879,180 @@ function Dashboard() {
   }
 
   return `
-    <main class="dashboard container">
-      <div class="stats-grid">
-        <div class="stat-card glass-panel">
-          <div class="stat-label">Total Repositories</div>
-          <div class="stat-value">${stats.total}</div>
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 class="page-title">Repositories</h1>
+          <p class="page-subtitle">${state.user.login}'s GitHub repositories — ${stats.total} total</p>
         </div>
-        <div class="stat-card glass-panel">
-          <div class="stat-label">Public / Private</div>
-          <div class="stat-value"><span style="color: var(--primary)">${stats.public}</span> <span style="color: var(--text-dim)">/</span> ${stats.private}</div>
-        </div>
-        <div class="stat-card glass-panel">
-          <div class="stat-label">Total Gained Stars</div>
-          <div class="stat-value"><i data-lucide="star" style="color: var(--warning); width: 24px; display: inline; vertical-align: middle;"></i> ${stats.stars}</div>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <div class="search-box">
-          <i data-lucide="search"></i>
-          <input type="text" id="repo-search" placeholder="Search repositories..." value="${state.searchQuery}">
-        </div>
-
-        <div class="filter-group">
-          <select class="select-custom" id="sort-select">
-            <option value="updated" ${state.sortBy === 'updated' ? 'selected' : ''}>Sort by: Last Updated</option>
-            <option value="name" ${state.sortBy === 'name' ? 'selected' : ''}>Sort by: Name</option>
-            <option value="stars" ${state.sortBy === 'stars' ? 'selected' : ''}>Sort by: Stars</option>
-          </select>
-          <button class="btn btn-primary" id="open-modal-btn">
+        <div class="page-actions">
+          <button class="btn btn-ghost" id="open-modal-btn">
             <i data-lucide="plus"></i> New Repo
           </button>
         </div>
       </div>
 
-      <div class="quick-filters" style="margin-bottom: 0.75rem;">
-        <div class="chip ${state.filter === 'all' ? 'active' : ''}" data-filter="all">All Types</div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-accent"><i data-lucide="book" style="width:20px;height:20px;"></i></div>
+          <div class="stat-body">
+            <div class="stat-value">${stats.total}</div>
+            <div class="stat-label">Total Repos</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-success"><i data-lucide="globe" style="width:20px;height:20px;"></i></div>
+          <div class="stat-body">
+            <div class="stat-value">${stats.public}</div>
+            <div class="stat-label">Public</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-cf"><i data-lucide="lock" style="width:20px;height:20px;"></i></div>
+          <div class="stat-body">
+            <div class="stat-value">${stats.private}</div>
+            <div class="stat-label">Private</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-warning"><i data-lucide="star" style="width:20px;height:20px;"></i></div>
+          <div class="stat-body">
+            <div class="stat-value">${stats.stars}</div>
+            <div class="stat-label">Total Stars</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-wrap">
+          <i data-lucide="search" class="search-icon"></i>
+          <input type="text" class="search-input" id="repo-search" placeholder="Search repositories..." value="${state.searchQuery}">
+        </div>
+        <select class="select-custom" id="sort-select">
+          <option value="updated" ${state.sortBy === 'updated' ? 'selected' : ''}>Last Updated</option>
+          <option value="name" ${state.sortBy === 'name' ? 'selected' : ''}>Name A–Z</option>
+          <option value="stars" ${state.sortBy === 'stars' ? 'selected' : ''}>Most Stars</option>
+        </select>
+      </div>
+
+      <div class="filter-bar" style="margin-bottom:0.5rem;">
+        <span class="filter-bar-label"><i data-lucide="filter" style="width:11px;height:11px;"></i> Type:</span>
+        <div class="chip ${state.filter === 'all' ? 'active' : ''}" data-filter="all">All</div>
         <div class="chip ${state.filter === 'public' ? 'active' : ''}" data-filter="public">Public</div>
         <div class="chip ${state.filter === 'private' ? 'active' : ''}" data-filter="private">Private</div>
         <div class="chip ${state.filter === 'sources' ? 'active' : ''}" data-filter="sources">Sources</div>
         <div class="chip ${state.filter === 'forks' ? 'active' : ''}" data-filter="forks">Forks</div>
       </div>
 
-      <div class="quick-filters owners-filter" style="margin-bottom: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
-        <div style="font-size: 0.75rem; color: var(--text-dim); display: flex; align-items: center; margin-right: 0.5rem;">
-          <i data-lucide="user" style="width: 14px; margin-right: 4px;"></i> Owner:
-        </div>
+      <div class="filter-bar owners-filter" style="margin-bottom:1.25rem;">
+        <span class="filter-bar-label"><i data-lucide="user" style="width:11px;height:11px;"></i> Owner:</span>
         <div class="chip ${state.ownerFilter === 'all' ? 'active' : ''}" data-owner="all">Everyone</div>
         ${Array.from(new Set(state.repos.map(r => r.owner.login))).map(owner => `
           <div class="chip ${state.ownerFilter === owner ? 'active' : ''}" data-owner="${owner}">${owner}</div>
         `).join('')}
       </div>
 
-      <div class="repo-list">
-        ${filteredRepos.map(repo => RepoListItem(repo)).join('')}
+      <div class="list-stack repo-list">
+        ${filteredRepos.length === 0 ? `
+          <div class="empty-state">
+            <i data-lucide="search" class="empty-state-icon"></i>
+            <h3>No repositories found</h3>
+            <p>Try adjusting your search or filter criteria.</p>
+          </div>
+        ` : filteredRepos.map(repo => RepoListItem(repo)).join('')}
       </div>
 
       <div class="bulk-actions-bar ${state.selectedRepos.size > 0 ? 'active' : ''}">
         <div class="selection-count">
-          <i data-lucide="check-square" style="vertical-align: middle; margin-right: 0.5rem;"></i>
-          ${state.selectedRepos.size} items selected
+          <i data-lucide="check-square" style="width:16px;height:16px;"></i>
+          ${state.selectedRepos.size} selected
         </div>
-        <div style="display: flex; gap: 1rem;">
-          <button class="btn btn-outline" id="clear-selection-btn">Cancel</button>
-          <button class="btn btn-primary" id="bulk-delete-btn" style="background: var(--error); color: white;">
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn btn-ghost btn-sm" id="clear-selection-btn">Cancel</button>
+          <button class="btn btn-danger btn-sm" id="bulk-delete-btn">
             <i data-lucide="trash-2"></i> Delete Selected
           </button>
         </div>
       </div>
 
       <div class="modal-overlay" id="modal-overlay">
-        <div class="modal glass-panel">
-          <button class="modal-close" id="close-modal-btn">
-            <i data-lucide="x"></i>
-          </button>
-          <h2 style="margin-bottom: 0.5rem;">Create New Repository</h2>
-          <p style="color: var(--text-dim); font-size: 0.875rem; margin-bottom: 2rem;">Setup your new project in seconds.</p>
-          
+        <div class="modal">
+          <button class="modal-close" id="close-modal-btn"><i data-lucide="x"></i></button>
+          <div class="modal-header">
+            <div class="modal-title">Create New Repository</div>
+            <div class="modal-subtitle">Setup your new project in seconds.</div>
+          </div>
           <div class="input-group">
             <label>Repository Name</label>
             <input type="text" id="new-repo-name" placeholder="my-awesome-project">
           </div>
-          
           <div class="input-group">
             <label>Description (optional)</label>
             <input type="text" id="new-repo-desc" placeholder="A brief description of your project">
           </div>
-
-          <div class="input-group" style="display: flex; gap: 1rem; align-items: center;">
-            <input type="checkbox" id="new-repo-private" style="width: auto;">
-            <label for="new-repo-private" style="margin-bottom: 0; cursor: pointer;">Private Repository</label>
+          <div class="input-group" style="display:flex;gap:0.75rem;align-items:center;">
+            <input type="checkbox" id="new-repo-private" style="width:auto;accent-color:var(--accent);">
+            <label for="new-repo-private" style="margin:0;cursor:pointer;">Private Repository</label>
           </div>
-
-          <button class="btn btn-primary" id="create-repo-btn" style="width: 100%; margin-top: 1rem;">
-            Create Repository
+          <button class="btn btn-primary" id="create-repo-btn" style="width:100%;margin-top:0.5rem;">
+            <i data-lucide="plus"></i> Create Repository
           </button>
         </div>
       </div>
 
       <div class="modal-overlay" id="commits-modal-overlay">
-        <div class="modal glass-panel" style="max-width: 600px; width: 90%;">
-          <button class="modal-close" id="close-commits-modal-btn">
-            <i data-lucide="x"></i>
-          </button>
-          <h2 style="margin-bottom: 0.5rem;" id="commits-modal-title">Repository Commits</h2>
-          <p style="color: var(--text-dim); font-size: 0.875rem; margin-bottom: 1.5rem;" id="commits-modal-subtitle">Recent commits</p>
-          
-          <div id="commits-list-container" style="max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.5rem;">
-            <!-- Commits will be loaded here -->
+        <div class="modal" style="max-width:600px;">
+          <button class="modal-close" id="close-commits-modal-btn"><i data-lucide="x"></i></button>
+          <div class="modal-header">
+            <div class="modal-title" id="commits-modal-title">Repository Commits</div>
+            <div class="modal-subtitle" id="commits-modal-subtitle">Recent commit history</div>
+          </div>
+          <div id="commits-list-container" style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;padding-right:0.25rem;">
           </div>
         </div>
       </div>
-    </main>
+    </div>
   `
 }
 
 function CloudflareAccountsView() {
+
   return `
-    <main class="container">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-        <div>
-          <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">CF Accounts</h1>
-          <p style="color: var(--text-dim);">Manage your Cloudflare identities and API keys.</p>
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 class="page-title">CF Accounts</h1>
+          <p class="page-subtitle">Manage your Cloudflare identities and API keys.</p>
         </div>
-        <button class="btn btn-primary" id="add-cf-account-btn">
-          <i data-lucide="plus-circle"></i> Add Account
-        </button>
+        <div class="page-actions">
+          <button class="btn btn-cf" id="add-cf-account-btn">
+            <i data-lucide="plus"></i> Add Account
+          </button>
+        </div>
       </div>
 
       ${state.cfAccounts.length === 0 ? `
-        <div class="glass-panel" style="padding: 4rem; text-align: center;">
-          <i data-lucide="user-plus" style="width: 48px; height: 48px; color: var(--text-dim); margin-bottom: 1.5rem;"></i>
+        <div class="empty-state">
+          <i data-lucide="shield" class="empty-state-icon"></i>
           <h3>No Cloudflare Accounts</h3>
-          <p style="color: var(--text-dim); margin-top: 0.5rem;">Add your first account to start managing domains.</p>
+          <p>Add your first account to start managing domains and DNS records.</p>
+          <button class="btn btn-cf" id="add-cf-account-btn-2"><i data-lucide="plus"></i> Add Account</button>
         </div>
       ` : `
-        <div class="cf-accounts-grid">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;">
           ${state.cfAccounts.map(acc => `
-            <div class="cf-account-card glass-panel" style="display: flex; flex-direction: column; justify-content: space-between;">
-              <div class="cf-account-header">
+            <div class="card card-padded" style="border-color:rgba(249,115,22,0.15);">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem;">
                 <div>
-                  <div class="cf-badge"><i data-lucide="shield"></i> Account</div>
-                  <h3 style="margin-top: 0.75rem;">${acc.name || acc.email}</h3>
-                  <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem;">${acc.email}</div>
+                  <span class="cf-badge" style="margin-bottom:0.75rem;display:inline-flex;"><i data-lucide="shield" style="width:11px;height:11px;"></i> Account</span>
+                  <h3 style="font-family:var(--font-display);font-size:1.1rem;font-weight:600;color:var(--text-primary);margin-top:0.5rem;">${acc.name || acc.email}</h3>
+                  <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.2rem;">${acc.email}</div>
                 </div>
-                <button class="btn-icon danger remove-cf-acc" data-id="${acc.id}">
+                <button class="btn-icon danger remove-cf-acc" data-id="${acc.id}" title="Remove Account">
                   <i data-lucide="trash-2"></i>
                 </button>
               </div>
-              
-              <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-deep); border-radius: 8px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); border: 1px solid var(--border-subtle);">
+              <div style="padding:0.75rem;background:var(--bg-void);border-radius:var(--radius-sm);border:1px solid var(--border-subtle);font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);">
                 Key: ••••••••••••••••${acc.key.slice(-4)}
               </div>
             </div>
@@ -931,42 +1060,37 @@ function CloudflareAccountsView() {
         </div>
       `}
 
-      <!-- Add Account Modal -->
       <div class="modal-overlay" id="cf-modal-overlay">
-        <div class="modal glass-panel">
-          <button class="modal-close" id="close-cf-modal-btn">
-            <i data-lucide="x"></i>
-          </button>
-          <h2 style="margin-bottom: 0.5rem;">Add Cloudflare Account</h2>
-          <p style="color: var(--text-dim); font-size: 0.875rem; margin-bottom: 2rem;">Use your Global API Key for full access.</p>
-          
+        <div class="modal">
+          <button class="modal-close" id="close-cf-modal-btn"><i data-lucide="x"></i></button>
+          <div class="modal-header">
+            <div class="modal-title">Add Cloudflare Account</div>
+            <div class="modal-subtitle">Use your Global API Key for full access.</div>
+          </div>
           <div class="input-group">
             <label>Custom Name (optional)</label>
             <input type="text" id="cf-acc-name" placeholder="Work Account / Personal">
           </div>
-
           <div class="input-group">
             <label>Cloudflare Email</label>
             <input type="email" id="cf-acc-email" placeholder="user@example.com">
           </div>
-          
           <div class="input-group">
             <label>Global API Key</label>
             <input type="password" id="cf-acc-key" placeholder="Paste your key here">
           </div>
-
-          <button class="btn btn-primary" id="save-cf-account-btn" style="width: 100%; margin-top: 1rem;">
-            Save Account
+          <button class="btn btn-cf" id="save-cf-account-btn" style="width:100%;">
+            <i data-lucide="save"></i> Save Account
           </button>
         </div>
       </div>
-    </main>
+    </div>
   `
 }
 
 function CloudflareDomainsView() {
   const allZones = []
-  const uniqueRealAccounts = new Map() // { id: name }
+  const uniqueRealAccounts = new Map()
 
   Object.entries(state.cfZones).forEach(([accId, zones]) => {
     const localCredential = state.cfAccounts.find(a => a.id === accId)
@@ -986,116 +1110,101 @@ function CloudflareDomainsView() {
     return matchesSearch && matchesCredential && matchesRealAccount
   })
 
-  // Sort: Starred zones first, then alphabetically by name
   const sortedZones = [...filteredZones].sort((a, b) => {
     const aStarred = state.cfStarredDomains.includes(a.id) ? 1 : 0
     const bStarred = state.cfStarredDomains.includes(b.id) ? 1 : 0
-    if (aStarred !== bStarred) {
-      return bStarred - aStarred
-    }
+    if (aStarred !== bStarred) return bStarred - aStarred
     return a.name.localeCompare(b.name)
   })
 
   return `
-    <main class="container">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-        <div>
-          <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">CF Domains</h1>
-          <p style="color: var(--text-dim);">Aggregated list from all your Cloudflare accounts and memberships.</p>
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 class="page-title">Manage Domains</h1>
+          <p class="page-subtitle">${allZones.length} domains across all Cloudflare accounts</p>
         </div>
       </div>
 
-      <div class="toolbar" style="margin-bottom: 1.5rem;">
-        <div class="search-box">
-          <i data-lucide="search"></i>
-          <input type="text" id="cf-domain-search" placeholder="Search domains..." value="${searchQuery}">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <i data-lucide="search" class="search-icon"></i>
+          <input type="text" class="search-input" id="cf-domain-search" placeholder="Search domains..." value="${searchQuery}">
         </div>
-        <div class="filter-group">
-          <input type="text" id="auto-replace-old-ip" placeholder="Old IP" class="select-custom" style="padding: 0.4rem; width: 120px;">
-          <input type="text" id="auto-replace-new-ip" placeholder="New IP" class="select-custom" style="padding: 0.4rem; width: 120px;">
-          <button class="btn btn-outline" id="auto-replace-ip-btn" title="Auto replace A records IP across filtered domains">
-            <i data-lucide="repeat"></i> Replace IP
-          </button>
-        </div>
+        <input type="text" id="auto-replace-old-ip" placeholder="Old IP" style="width:110px;padding:0.5rem 0.75rem;">
+        <input type="text" id="auto-replace-new-ip" placeholder="New IP" style="width:110px;padding:0.5rem 0.75rem;">
+        <button class="btn btn-ghost" id="auto-replace-ip-btn" title="Auto replace A record IP across filtered domains">
+          <i data-lucide="repeat"></i> Replace IP
+        </button>
       </div>
 
-      <div class="filter-section glass-panel" style="padding: 1rem; margin-bottom: 2rem; border-color: var(--border-subtle);">
-        <div class="quick-filters" style="margin-bottom: 1rem;">
-          <div style="font-size: 0.75rem; color: var(--text-dim); display: flex; align-items: center; min-width: 80px;">
-            <i data-lucide="key" style="width: 14px; margin-right: 6px;"></i> API:
-          </div>
-          <div class="chip ${state.cfAccountFilter === 'all' ? 'active' : ''}" data-cf-filter="all">All</div>
-          ${state.cfAccounts.map(acc => `
-            <div class="chip ${state.cfAccountFilter === acc.id ? 'active' : ''}" data-cf-filter="${acc.id}" title="${acc.name}">${acc.name}</div>
-          `).join('')}
-        </div>
+      <div class="filter-bar" style="margin-bottom:0.5rem;">
+        <span class="filter-bar-label"><i data-lucide="key" style="width:11px;height:11px;"></i> API Key:</span>
+        <div class="chip ${state.cfAccountFilter === 'all' ? 'active' : ''}" data-cf-filter="all">All</div>
+        ${state.cfAccounts.map(acc => `
+          <div class="chip ${state.cfAccountFilter === acc.id ? 'active' : ''}" data-cf-filter="${acc.id}">${acc.name}</div>
+        `).join('')}
+      </div>
 
-        <div class="quick-filters">
-          <div style="font-size: 0.75rem; color: var(--text-dim); display: flex; align-items: center; min-width: 80px;">
-            <i data-lucide="building" style="width: 14px; margin-right: 6px;"></i> Org:
-          </div>
-          <div class="chip ${state.cfRealAccountFilter === 'all' ? 'active' : ''}" data-cf-real-filter="all">All Orgs</div>
-          ${Array.from(uniqueRealAccounts.entries()).map(([id, name]) => {
-    const shortName = name.replace(/'s Account$/i, '')
-    return `
-              <div class="chip ${state.cfRealAccountFilter === id ? 'active' : ''}" data-cf-real-filter="${id}" title="${name}">${shortName}</div>
-            `
-  }).join('')}
-        </div>
+      <div class="filter-bar" style="margin-bottom:1.25rem;">
+        <span class="filter-bar-label"><i data-lucide="building" style="width:11px;height:11px;"></i> Org:</span>
+        <div class="chip ${state.cfRealAccountFilter === 'all' ? 'active' : ''}" data-cf-real-filter="all">All Orgs</div>
+        ${Array.from(uniqueRealAccounts.entries()).map(([id, name]) => {
+          const shortName = name.replace(/'s Account$/i, '')
+          return `<div class="chip ${state.cfRealAccountFilter === id ? 'active' : ''}" data-cf-real-filter="${id}">${shortName}</div>`
+        }).join('')}
       </div>
 
       ${allZones.length === 0 ? `
-        <div class="glass-panel" style="padding: 4rem; text-align: center;">
-          <i data-lucide="cloud-off" style="width: 48px; height: 48px; color: var(--text-dim); margin-bottom: 1.5rem;"></i>
+        <div class="empty-state">
+          <i data-lucide="cloud-off" class="empty-state-icon"></i>
           <h3>No Domains Found</h3>
-          <p style="color: var(--text-dim); margin-top: 0.5rem;">Try adding a credential or refreshing the page.</p>
+          <p>Add a Cloudflare account to start managing domains.</p>
         </div>
       ` : `
-        <div class="repo-list">
+        <div class="list-stack">
           ${sortedZones.length === 0 ? `
-            <div style="padding: 3rem; text-align: center; color: var(--text-dim);">No domains match your filters.</div>
+            <div class="empty-state" style="padding:2rem;"><p>No domains match your filters.</p></div>
           ` : sortedZones.map(zone => {
             const isStarred = state.cfStarredDomains.includes(zone.id)
+            const isActive = zone.status === 'active'
             return `
-              <div class="repo-list-item glass-panel" style="padding: 1.25rem 2rem; border-color: ${isStarred ? 'rgba(245, 158, 11, 0.45)' : 'var(--glass-border)'}; box-shadow: ${isStarred ? '0 0 10px rgba(245, 158, 11, 0.05)' : 'none'};">
-                <div style="display: flex; align-items: center; gap: 1.5rem; flex: 1;">
-                  <button class="toggle-star-domain-btn" data-zone-id="${zone.id}" title="${isStarred ? 'Unstar Domain' : 'Star Domain'}" style="border: none; background: none; padding: 4px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: ${isStarred ? 'var(--warning)' : 'var(--text-dim)'}; transition: var(--transition);">
-                    <i data-lucide="star" style="width: 18px; height: 18px; ${isStarred ? 'fill: var(--warning); color: var(--warning);' : 'color: var(--text-dim);'}"></i>
+              <div class="list-item" style="border-color:${isStarred ? 'rgba(234,179,8,0.3)' : ''}">
+                <button class="btn-icon toggle-star-domain-btn" data-zone-id="${zone.id}" title="${isStarred ? 'Unpin' : 'Pin Domain'}" style="color:${isStarred ? 'var(--warning)' : 'var(--text-dim)'};background:${isStarred ? 'var(--warning-dim)' : ''}">
+                  <i data-lucide="star" style="${isStarred ? 'fill:var(--warning);' : ''}"></i>
+                </button>
+                <div class="status-dot ${isActive ? 'active' : 'pending'}" style="margin-left:-0.25rem;"></div>
+                <div class="list-item-body">
+                  <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
+                    <span class="list-item-title" style="cursor:default;">${zone.name}</span>
+                    ${isStarred ? '<span class="badge badge-warning badge-pill">Pinned</span>' : ''}
+                    <span class="badge badge-pill ${isActive ? 'badge-success' : 'badge-warning'}">${zone.status}</span>
+                  </div>
+                  <div class="list-item-meta">
+                    <span class="list-item-meta-unit" style="color:var(--cf-orange);">
+                      <i data-lucide="building"></i>
+                      ${zone.account.name.replace(/'s Account$/i, '')}
+                    </span>
+                    ${zone.localAccount ? `<span class="list-item-meta-unit"><i data-lucide="key"></i> via ${zone.localAccount.name}</span>` : ''}
+                  </div>
+                </div>
+                <div class="list-item-actions">
+                  <button class="btn-icon cf-hover view-dns-btn" data-zone-id="${zone.id}" data-zone-name="${zone.name}" data-acc-id="${zone.localAccount.id}" title="Manage DNS Records">
+                    <i data-lucide="list"></i>
                   </button>
-                  <span class="domain-status ${zone.status === 'active' ? 'domain-active' : 'domain-pending'}"></span>
-                  <div style="flex: 1;">
-                    <div style="font-weight: 600; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
-                      ${zone.name}
-                      ${isStarred ? '<span style="font-size: 0.65rem; background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.25); padding: 1px 6px; border-radius: 4px; font-weight: 600;">PINNED</span>' : ''}
-                    </div>
-                    <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                      <span>Account:</span>
-                      <span style="color: var(--warning); font-weight: 600;" title="${zone.account.name}">${zone.account.name.replace(/'s Account$/i, '')}</span>
-                      <span style="opacity: 0.5;">•</span>
-                      <span style="font-size: 0.75rem;">Status: ${zone.status}</span>
-                      ${zone.localAccount ? `
-                        <span style="opacity: 0.5;">•</span>
-                        <span style="font-size: 0.7rem; background: var(--bg-elevated); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);">via ${zone.localAccount.name}</span>
-                      ` : ''}
-                    </div>
-                  </div>
-                  <div class="repo-actions" style="border: none; margin: 0; padding: 0;">
-                    <button class="btn-icon view-dns-btn" data-zone-id="${zone.id}" data-zone-name="${zone.name}" data-acc-id="${zone.localAccount.id}" title="Manage DNS Records">
-                      <i data-lucide="list"></i>
-                    </button>
-                    <a href="https://dash.cloudflare.com/${zone.account.id}/${zone.name}" target="_blank" class="btn-icon" title="Open in Cloudflare">
-                      <i data-lucide="external-link"></i>
-                    </a>
-                  </div>
+                  <a href="https://dash.cloudflare.com/${zone.account.id}/${zone.name}" target="_blank" class="btn-icon" title="Open in Cloudflare">
+                    <i data-lucide="external-link"></i>
+                  </a>
                 </div>
               </div>
             `
           }).join('')}
         </div>
       `}
-    </main>
+    </div>
   `
 }
+
 
 function CloudflareDnsView() {
   const { zoneId, zoneName, localAccount } = state.activeZone
@@ -1107,72 +1216,73 @@ function CloudflareDnsView() {
     r.type.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  const getDnsTypeBadge = (type) => {
+    const cls = {
+      'A': 'badge-dns-a', 'AAAA': 'badge-dns-aaaa',
+      'CNAME': 'badge-dns-cname', 'TXT': 'badge-dns-txt',
+      'MX': 'badge-dns-mx', 'NS': 'badge-dns-ns'
+    }[type] || 'badge-muted'
+    return `<span class="badge ${cls}">${type}</span>`
+  }
+
   return `
-    <main class="container">
-      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
-        <button class="btn-icon" id="back-to-domains" title="Back to Domains">
-          <i data-lucide="arrow-left"></i>
-        </button>
-        <div>
-          <h1 style="font-size: 2rem; margin-bottom: 0.25rem;">${zoneName}</h1>
-          <p style="color: var(--text-dim); font-size: 0.875rem;">
-            DNS Records • <span style="color: var(--warning)">${localAccount.name}</span>
-          </p>
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-header-text" style="display:flex;align-items:center;gap:0.75rem;">
+          <button class="btn-icon" id="back-to-domains" title="Back to Domains" style="flex-shrink:0;">
+            <i data-lucide="arrow-left"></i>
+          </button>
+          <div>
+            <h1 class="page-title">${zoneName}</h1>
+            <p class="page-subtitle">DNS Records &mdash; via <span style="color:var(--cf-orange);">${localAccount.name}</span></p>
+          </div>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost" id="refresh-dns-btn"><i data-lucide="refresh-cw"></i> Refresh</button>
+          <button class="btn btn-cf" id="add-dns-record-btn"><i data-lucide="plus"></i> Add Record</button>
         </div>
       </div>
 
-      <div class="toolbar" style="margin-bottom: 2rem;">
-        <div class="search-box">
-          <i data-lucide="search"></i>
-          <input type="text" id="dns-search" placeholder="Search DNS records..." value="${searchQuery}">
-        </div>
-        <div class="filter-group">
-           <button class="btn btn-outline" id="refresh-dns-btn">
-            <i data-lucide="refresh-cw"></i>
-          </button>
-          <button class="btn btn-primary" id="add-dns-record-btn">
-            <i data-lucide="plus"></i> Add Record
-          </button>
+      <div class="toolbar" style="margin-bottom:1rem;">
+        <div class="search-wrap">
+          <i data-lucide="search" class="search-icon"></i>
+          <input type="text" class="search-input" id="dns-search" placeholder="Search DNS records (name, value, type)..." value="${searchQuery}">
         </div>
       </div>
 
       ${records.length === 0 ? `
-        <div class="glass-panel" style="padding: 4rem; text-align: center;">
-          <p style="color: var(--text-dim);">No DNS records found.</p>
+        <div class="empty-state">
+          <i data-lucide="list" class="empty-state-icon"></i>
+          <h3>No DNS Records</h3>
+          <p>This zone has no DNS records yet. Add one to get started.</p>
         </div>
       ` : `
-        <div class="repo-list">
+        <div class="list-stack">
           ${filteredRecords.map(record => `
-            <div class="repo-list-item glass-panel" style="padding: 1rem 1.5rem; gap: 1rem;">
-              <div style="width: 60px; font-weight: 800; color: var(--primary); font-size: 0.75rem; background: var(--bg-elevated); padding: 4px 8px; border-radius: 4px; text-align: center; border: 1px solid var(--border-subtle);">
-                ${record.type}
+            <div class="list-item" style="padding:0.75rem 1rem;">
+              ${getDnsTypeBadge(record.type)}
+              <div class="list-item-body">
+                <div style="font-weight:600;font-family:var(--font-mono);font-size:0.875rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${record.name}</div>
+                <div style="font-size:0.8rem;color:var(--text-muted);font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0.2rem;">${record.content}</div>
               </div>
-              <div style="flex: 1; min-width: 0;">
-                <div style="font-weight: 600; font-family: var(--font-mono); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                  ${record.name}
-                </div>
-                <div style="font-size: 0.8rem; color: var(--text-dim); font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 0.25rem;">
-                  ${record.content}
-                </div>
-              </div>
-              <div style="display: flex; align-items: center; gap: 1.5rem; font-size: 0.75rem; color: var(--text-dim);">
-                <div title="Proxied Status" style="display: flex; align-items: center; gap: 4px;">
-                  <i data-lucide="${record.proxied ? 'cloud' : 'cloud-off'}" style="width: 14px; color: ${record.proxied ? '#f38020' : 'inherit'}"></i>
+              <div style="display:flex;align-items:center;gap:1rem;font-size:0.75rem;color:var(--text-muted);flex-shrink:0;">
+                <span style="display:flex;align-items:center;gap:4px;color:${record.proxied ? 'var(--cf-orange)' : 'var(--text-dim)'}">
+                  <i data-lucide="${record.proxied ? 'cloud' : 'cloud-off'}" style="width:13px;height:13px;"></i>
                   ${record.proxied ? 'Proxied' : 'DNS Only'}
-                </div>
-                <div title="TTL" style="display: flex; align-items: center; gap: 4px;">
-                  <i data-lucide="clock" style="width: 12px;"></i> ${record.ttl === 1 ? 'Auto' : record.ttl}
-                </div>
+                </span>
+                <span style="display:flex;align-items:center;gap:4px;">
+                  <i data-lucide="clock" style="width:12px;height:12px;"></i>
+                  ${record.ttl === 1 ? 'Auto' : record.ttl}
+                </span>
               </div>
-              <div class="repo-actions" style="border: none; margin: 0; padding: 0;">
-                <button class="btn-icon edit-dns-btn" 
-                  data-id="${record.id}" 
-                  data-type="${record.type}" 
-                  data-name="${record.name}" 
-                  data-content="${record.content}" 
-                  data-proxied="${record.proxied}" 
-                  data-ttl="${record.ttl}"
-                >
+              <div class="list-item-actions">
+                <button class="btn-icon edit-dns-btn"
+                  data-id="${record.id}"
+                  data-type="${record.type}"
+                  data-name="${record.name}"
+                  data-content="${record.content}"
+                  data-proxied="${record.proxied}"
+                  data-ttl="${record.ttl}">
                   <i data-lucide="edit-3"></i>
                 </button>
                 <button class="btn-icon danger delete-dns-btn" data-id="${record.id}" data-name="${record.name}">
@@ -1184,21 +1294,18 @@ function CloudflareDnsView() {
         </div>
       `}
 
-      <!-- DNS Modal -->
       <div class="modal-overlay" id="dns-modal-overlay">
-        <div class="modal glass-panel">
-          <button class="modal-close" id="close-dns-modal-btn">
-            <i data-lucide="x"></i>
-          </button>
-          <h2 id="dns-modal-title" style="margin-bottom: 0.5rem;">Add DNS Record</h2>
-          <p style="color: var(--text-dim); font-size: 0.875rem; margin-bottom: 2rem;">Configure your domain routing.</p>
-          
+        <div class="modal">
+          <button class="modal-close" id="close-dns-modal-btn"><i data-lucide="x"></i></button>
+          <div class="modal-header">
+            <div class="modal-title" id="dns-modal-title">Add DNS Record</div>
+            <div class="modal-subtitle">Configure your domain routing.</div>
+          </div>
           <input type="hidden" id="dns-record-id">
-
-          <div style="display: grid; grid-template-columns: 100px 1fr; gap: 1rem;">
+          <div style="display:grid;grid-template-columns:100px 1fr;gap:1rem;">
             <div class="input-group">
               <label>Type</label>
-              <select class="select-custom" id="dns-record-type" style="width: 100%;">
+              <select class="select-custom" id="dns-record-type" style="width:100%;">
                 <option value="A">A</option>
                 <option value="AAAA">AAAA</option>
                 <option value="CNAME">CNAME</option>
@@ -1212,20 +1319,18 @@ function CloudflareDnsView() {
               <input type="text" id="dns-record-name" placeholder="example.com">
             </div>
           </div>
-          
           <div class="input-group">
             <label>Content / Value</label>
             <input type="text" id="dns-record-content" placeholder="192.168.1.1 or target.com">
           </div>
-
-          <div style="display: flex; gap: 2rem; align-items: center; margin-bottom: 1.5rem; background: var(--bg-elevated); padding: 1rem; border-radius: 8px;">
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-              <input type="checkbox" id="dns-record-proxied" style="width: auto;">
-              <label for="dns-record-proxied" style="margin-bottom: 0; cursor: pointer;">Proxied</label>
+          <div style="display:flex;gap:2rem;align-items:center;margin-bottom:1.25rem;background:var(--bg-elevated);padding:0.875rem 1rem;border-radius:var(--radius-sm);">
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <input type="checkbox" id="dns-record-proxied" style="width:auto;accent-color:var(--cf-orange);">
+              <label for="dns-record-proxied" style="margin:0;cursor:pointer;">Proxied</label>
             </div>
-            <div style="display: flex; gap: 0.5rem; align-items: center; flex: 1;">
-              <label style="margin-bottom: 0; white-space: nowrap;">TTL:</label>
-              <select class="select-custom" id="dns-record-ttl" style="padding: 0.5rem; flex: 1;">
+            <div style="display:flex;gap:0.5rem;align-items:center;flex:1;">
+              <label style="margin:0;white-space:nowrap;">TTL:</label>
+              <select class="select-custom" id="dns-record-ttl" style="flex:1;">
                 <option value="1">Auto</option>
                 <option value="60">1 min</option>
                 <option value="3600">1 hour</option>
@@ -1233,13 +1338,12 @@ function CloudflareDnsView() {
               </select>
             </div>
           </div>
-
-          <button class="btn btn-primary" id="save-dns-record-btn" style="width: 100%;">
-            Save DNS Record
+          <button class="btn btn-cf" id="save-dns-record-btn" style="width:100%;">
+            <i data-lucide="save"></i> Save DNS Record
           </button>
         </div>
       </div>
-    </main>
+    </div>
   `
 }
 
@@ -1249,61 +1353,63 @@ function GlobalCommitsView() {
   }
 
   return `
-    <main class="container">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-        <div>
-          <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Recent Commits</h1>
-          <p style="color: var(--text-dim);">Global commit history across all your repositories.</p>
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 class="page-title">Recent Commits</h1>
+          <p class="page-subtitle">Global commit history across all your repositories.</p>
         </div>
-        <button class="btn btn-outline" id="refresh-global-commits">
-          <i data-lucide="refresh-cw" class="${state.loadingGlobalCommits ? 'spin' : ''}"></i> Refresh
-        </button>
+        <div class="page-actions">
+          <button class="btn btn-ghost" id="refresh-global-commits">
+            <i data-lucide="refresh-cw" class="${state.loadingGlobalCommits ? 'spin' : ''}"></i> Refresh
+          </button>
+        </div>
       </div>
 
-      <div id="global-commits-list" class="repo-list">
+      <div id="global-commits-list" class="list-stack">
         ${state.loadingGlobalCommits ?
-      '<div style="text-align: center; padding: 4rem;"><div class="loader" style="margin: 0 auto;"></div><p style="margin-top: 1rem; color: var(--text-dim);">Fetching global history...</p></div>' :
-      (state.globalCommits.length === 0 ?
-        '<div class="glass-panel" style="padding: 4rem; text-align: center;"><i data-lucide="history" style="width: 48px; height: 48px; color: var(--text-dim); margin-bottom: 1.5rem;"></i><p>No commits found in your history.</p></div>' :
-        state.globalCommits.map(c => {
-          const repoName = c.repository ? c.repository.full_name : 'Unknown Repo'
-          const author = c.commit.author.name
-          const date = new Date(c.commit.author.date).toLocaleString()
-          const message = c.commit.message.split('\n')[0]
-          const sha = c.sha.substring(0, 7)
-          return `
-                 <div class="repo-list-item glass-panel" style="padding: 1.25rem 2rem;">
-                   <div style="display: flex; align-items: center; gap: 1.5rem; flex: 1; min-width: 0;">
-                     <div style="flex: 1; min-width: 0;">
-                       <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                         <span style="font-family: var(--font-mono); font-size: 0.75rem; background: var(--bg-deep); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-subtle); color: var(--primary);">${sha}</span>
-                         <span style="font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;" title="${message}">${message}</span>
-                       </div>
-                       <div style="font-size: 0.8rem; color: var(--text-dim); display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                         <span style="display: flex; align-items: center; gap: 4px;">
-                           <i data-lucide="folder" style="width: 14px;"></i> ${repoName}
-                         </span>
-                         <span style="display: flex; align-items: center; gap: 4px;">
-                           <i data-lucide="user" style="width: 14px;"></i> ${author}
-                         </span>
-                         <span style="display: flex; align-items: center; gap: 4px;">
-                           <i data-lucide="clock" style="width: 14px;"></i> ${date}
-                         </span>
-                       </div>
-                     </div>
-                     <a href="${c.html_url}" target="_blank" class="btn-icon" title="View Commit">
-                       <i data-lucide="external-link"></i>
-                     </a>
-                   </div>
-                 </div>
-               `
-        }).join('')
-      )
-    }
+          `<div class="loading-center"><div class="loader" style="margin:0;"></div><span>Fetching global history...</span></div>` :
+          (state.globalCommits.length === 0 ?
+            `<div class="empty-state">
+              <i data-lucide="history" class="empty-state-icon"></i>
+              <h3>No Commits Found</h3>
+              <p>No commit history found in your repositories.</p>
+            </div>` :
+            state.globalCommits.map(c => {
+              const repoName = c.repository ? c.repository.full_name : 'Unknown Repo'
+              const author = c.commit.author.name
+              const date = new Date(c.commit.author.date).toLocaleString()
+              const message = c.commit.message.split('\n')[0]
+              const sha = c.sha.substring(0, 7)
+              return `
+                <div class="list-item">
+                  <div class="list-item-icon" style="background:var(--accent-dim);color:var(--accent-light);flex-shrink:0;">
+                    <i data-lucide="git-commit" style="width:15px;height:15px;"></i>
+                  </div>
+                  <div class="list-item-body">
+                    <div style="display:flex;align-items:center;gap:0.625rem;margin-bottom:0.25rem;flex-wrap:wrap;">
+                      <code style="font-size:0.75rem;">${sha}</code>
+                      <span style="font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px;" title="${message}">${message}</span>
+                    </div>
+                    <div class="list-item-meta">
+                      <span class="list-item-meta-unit"><i data-lucide="git-fork"></i> ${repoName}</span>
+                      <span class="list-item-meta-unit"><i data-lucide="user"></i> ${author}</span>
+                      <span class="list-item-meta-unit"><i data-lucide="clock"></i> ${date}</span>
+                    </div>
+                  </div>
+                  <a href="${c.html_url}" target="_blank" class="btn-icon" title="View Commit">
+                    <i data-lucide="external-link"></i>
+                  </a>
+                </div>
+              `
+            }).join('')
+          )
+        }
       </div>
-    </main>
+    </div>
   `
 }
+
 
 function TrendingView() {
   if (state.trendingRepos.length === 0 && !state.loadingTrending) {
@@ -1311,157 +1417,120 @@ function TrendingView() {
   }
 
   return `
-    <main class="container">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-        <div>
-          <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Trending</h1>
-          <p style="color: var(--text-dim);">See what the GitHub community is most excited about.</p>
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 class="page-title">Trending</h1>
+          <p class="page-subtitle">See what the GitHub community is most excited about.</p>
         </div>
-        <div style="display: flex; gap: 1rem; align-items: center;">
-          <select class="select-custom" id="trending-timeframe" style="padding: 0.5rem 1rem;">
+        <div class="page-actions">
+          <select class="select-custom" id="trending-timeframe">
             <option value="daily" ${state.trendingTimeframe === 'daily' ? 'selected' : ''}>Today</option>
             <option value="weekly" ${state.trendingTimeframe === 'weekly' ? 'selected' : ''}>This Week</option>
             <option value="monthly" ${state.trendingTimeframe === 'monthly' ? 'selected' : ''}>This Month</option>
           </select>
-          <button class="btn btn-outline" id="refresh-trending-btn" title="Refresh Trending">
+          <button class="btn btn-ghost" id="refresh-trending-btn" title="Refresh">
             <i data-lucide="refresh-cw" class="${state.loadingTrending ? 'spin' : ''}"></i>
           </button>
         </div>
       </div>
 
-      <div id="trending-repo-list" class="repo-list">
+      <div id="trending-repo-list" class="list-stack">
         ${state.loadingTrending ?
-      '<div style="text-align: center; padding: 4rem;"><div class="loader" style="margin: 0 auto;"></div><p style="margin-top: 1rem; color: var(--text-dim);">Fetching trending repositories...</p></div>' :
-      (state.trendingRepos.length === 0 ?
-        '<div class="glass-panel" style="padding: 4rem; text-align: center;"><i data-lucide="trending-up" style="width: 48px; height: 48px; color: var(--text-dim); margin-bottom: 1.5rem;"></i><p>No trending repositories found.</p></div>' :
-        state.trendingRepos.map((repo, index) => {
-          const periodText = state.trendingTimeframe === 'daily' ? 'today' : (state.trendingTimeframe === 'weekly' ? 'this week' : 'this month');
-
-          return `
-                 <div class="repo-list-item glass-panel" style="padding: 1.25rem 2rem; border-color: var(--border-subtle); display:flex; flex-direction:column; gap:0.75rem;">
-                   <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                       <i data-lucide="book" style="width: 16px; color: var(--text-dim);"></i>
-                       <a href="${repo.html_url}" target="_blank" style="font-weight: 500; font-size: 1.15rem; color: var(--primary); text-decoration: none;">
-                          <span style="font-weight: normal; opacity: 0.8">${repo.author} / </span>${repo.name}
-                       </a>
-                     </div>
-                     <button class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.75rem; margin: 0;">
-                       <i data-lucide="star" style="width: 14px;"></i> Star
-                     </button>
-                   </div>
-                   
-                   <p style="font-size: 0.85rem; color: var(--text-main); line-height: 1.5; max-width: 85%;">
-                     ${repo.description || 'No description provided.'}
-                   </p>
-                   
-                   <div style="font-size: 0.75rem; color: var(--text-dim); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-                     <div style="display: flex; align-items: center; gap: 1.25rem;">
-                       ${repo.language ? `
-                       <span style="display: flex; align-items: center; gap: 4px;">
-                         <span class="lang-dot" style="background: ${repo.languageColor || getLangColor(repo.language)}"></span> ${repo.language}
-                       </span>` : ''}
-                       <span style="display: flex; align-items: center; gap: 4px;" title="Stars">
-                         <i data-lucide="star" style="width: 14px;"></i> ${repo.stargazers_count.toLocaleString()}
-                       </span>
-                       <span style="display: flex; align-items: center; gap: 4px;" title="Forks">
-                         <i data-lucide="git-fork" style="width: 14px;"></i> ${repo.forks_count.toLocaleString()}
-                       </span>
-                       ${repo.builtBy && repo.builtBy.length > 0 ? `
-                       <span style="display: flex; align-items: center; gap: 4px; margin-left: 0.5rem;">
-                         Built by
-                         <div style="display:flex; margin-left:2px;">
-                           ${repo.builtBy.map(u => `<a href="${u.href}" target="_blank" title="${u.username}"><img src="${u.avatar}" style="width: 20px; height: 20px; border-radius: 50%; margin-left: -4px; border: 2px solid var(--bg-main);" /></a>`).join('')}
-                         </div>
-                       </span>` : ''}
-                     </div>
-                     
-                     ${repo.currentPeriodStars ? `
-                     <span style="display: flex; align-items: center; gap: 4px;">
-                       <i data-lucide="star" style="width: 14px;"></i> ${repo.currentPeriodStars.toLocaleString()} stars ${periodText}
-                     </span>` : ''}
-                   </div>
-                 </div>
-               `
-        }).join('')
-      )
-    }
+          `<div class="loading-center"><div class="loader" style="margin:0;"></div><span>Fetching trending repositories...</span></div>` :
+          (state.trendingRepos.length === 0 ?
+            `<div class="empty-state">
+              <i data-lucide="trending-up" class="empty-state-icon"></i>
+              <h3>No Trending Repos</h3>
+              <p>Could not fetch trending repositories. Try refreshing.</p>
+            </div>` :
+            state.trendingRepos.map((repo, index) => {
+              const periodText = state.trendingTimeframe === 'daily' ? 'today' : (state.trendingTimeframe === 'weekly' ? 'this week' : 'this month')
+              return `
+                <div class="list-item" style="align-items:flex-start;padding:1rem 1.25rem;">
+                  <div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.75rem;font-weight:700;color:var(--text-muted);flex-shrink:0;">
+                    #${index + 1}
+                  </div>
+                  <div class="list-item-body">
+                    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;flex-wrap:wrap;">
+                      <a href="${repo.html_url}" target="_blank" class="list-item-title">
+                        <span style="color:var(--text-muted);font-weight:400;">${repo.author} / </span>${repo.name}
+                      </a>
+                      ${repo.language ? `<span class="badge badge-pill badge-muted" style="display:flex;align-items:center;gap:4px;"><span class="lang-dot" style="background:${repo.languageColor || getLangColor(repo.language)};margin-right:0;"></span>${repo.language}</span>` : ''}
+                    </div>
+                    <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.5;margin-bottom:0.5rem;max-width:700px;">${repo.description || 'No description provided.'}</p>
+                    <div class="list-item-meta">
+                      <span class="list-item-meta-unit" title="Stars"><i data-lucide="star"></i> ${repo.stargazers_count.toLocaleString()}</span>
+                      <span class="list-item-meta-unit" title="Forks"><i data-lucide="git-fork"></i> ${repo.forks_count.toLocaleString()}</span>
+                      ${repo.currentPeriodStars ? `<span class="list-item-meta-unit" style="color:var(--warning);"><i data-lucide="trending-up"></i> +${repo.currentPeriodStars.toLocaleString()} ${periodText}</span>` : ''}
+                      ${repo.builtBy && repo.builtBy.length > 0 ? `
+                        <span class="list-item-meta-unit">Built by
+                          ${repo.builtBy.map(u => `<a href="${u.href}" target="_blank" title="${u.username}"><img src="${u.avatar}" style="width:18px;height:18px;border-radius:50%;vertical-align:middle;margin-left:2px;"/></a>`).join('')}
+                        </span>` : ''}
+                    </div>
+                  </div>
+                  <a href="${repo.html_url}" target="_blank" class="btn btn-ghost btn-sm" style="flex-shrink:0;">
+                    <i data-lucide="external-link"></i>
+                  </a>
+                </div>
+              `
+            }).join('')
+          )
+        }
       </div>
-    </main>
+    </div>
   `
 }
 
+
 function KanbanView() {
   const columns = [
-    { id: 'backlog', title: 'Backlog', icon: 'clipboard-list', color: 'var(--text-dim)' },
-    { id: 'todo', title: 'To Do', icon: 'list-todo', color: 'var(--primary)' },
+    { id: 'backlog', title: 'Backlog', icon: 'clipboard-list', color: 'var(--text-muted)' },
+    { id: 'todo', title: 'To Do', icon: 'circle', color: 'var(--accent-light)' },
     { id: 'in_progress', title: 'In Progress', icon: 'play-circle', color: 'var(--warning)' },
     { id: 'done', title: 'Done', icon: 'check-circle-2', color: 'var(--success)' }
-  ];
+  ]
 
-  // Get tasks filtered by repo and priority
   const filteredTasks = state.kanbanTasks.filter(task => {
-    const matchesRepo = state.kanbanFilters.repo === 'all' || task.repo === state.kanbanFilters.repo;
-    const matchesPriority = state.kanbanFilters.priority === 'all' || task.priority === state.kanbanFilters.priority;
-    return matchesRepo && matchesPriority;
-  });
+    const matchesRepo = state.kanbanFilters.repo === 'all' || task.repo === state.kanbanFilters.repo
+    const matchesPriority = state.kanbanFilters.priority === 'all' || task.priority === state.kanbanFilters.priority
+    return matchesRepo && matchesPriority
+  })
 
-  const allRepos = state.repos || [];
+  const allRepos = state.repos || []
 
   return `
-    <main class="container kanban-board-container">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem;">
-        <div>
-          <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Kanban Board</h1>
-          <p style="color: var(--text-dim);">Organize and track your repository tasks and development workflow.</p>
+    <div class="page-content" style="overflow-x:auto;">
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 class="page-title">Kanban Board</h1>
+          <p class="page-subtitle">Organize and track your repository tasks — ${filteredTasks.length} tasks total</p>
         </div>
-        <button class="btn btn-primary" id="kanban-new-task-btn">
-          <i data-lucide="plus"></i> New Task
-        </button>
-      </div>
-
-      <div class="toolbar" style="margin-bottom: 1.5rem; background: rgba(18, 18, 22, 0.2); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; width: 100%;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <i data-lucide="filter" style="width: 16px; color: var(--text-dim);"></i>
-            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Filters:</span>
-          </div>
-          
-          <div style="display: flex; gap: 0.5rem; align-items: center;">
-            <label style="font-size: 0.75rem; color: var(--text-dim); margin-right: 4px;">Repo:</label>
-            <select class="select-custom" id="kanban-filter-repo" style="padding: 0.45rem 0.8rem; font-size: 0.8rem; min-width: 165px;">
-              <option value="all" ${state.kanbanFilters.repo === 'all' ? 'selected' : ''}>All Repositories</option>
-              ${allRepos.map(r => `
-                <option value="${r.full_name}" ${state.kanbanFilters.repo === r.full_name ? 'selected' : ''}>${r.name}</option>
-              `).join('')}
-            </select>
-          </div>
-
-          <div style="display: flex; gap: 0.5rem; align-items: center;">
-            <label style="font-size: 0.75rem; color: var(--text-dim); margin-right: 4px;">Priority:</label>
-            <select class="select-custom" id="kanban-filter-priority" style="padding: 0.45rem 0.8rem; font-size: 0.8rem; min-width: 125px;">
-              <option value="all" ${state.kanbanFilters.priority === 'all' ? 'selected' : ''}>All Priorities</option>
-              <option value="low" ${state.kanbanFilters.priority === 'low' ? 'selected' : ''}>Low</option>
-              <option value="medium" ${state.kanbanFilters.priority === 'medium' ? 'selected' : ''}>Medium</option>
-              <option value="high" ${state.kanbanFilters.priority === 'high' ? 'selected' : ''}>High</option>
-            </select>
-          </div>
-
-          <div style="margin-left: auto; font-size: 0.8rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.5rem;">
-            <i data-lucide="check-square" style="width: 14px;"></i>
-            <span>Total Tasks: ${filteredTasks.length}</span>
-          </div>
+        <div class="page-actions">
+          <select class="select-custom" id="kanban-filter-repo" title="Filter by Repo">
+            <option value="all" ${state.kanbanFilters.repo === 'all' ? 'selected' : ''}>All Repos</option>
+            ${allRepos.map(r => `<option value="${r.full_name}" ${state.kanbanFilters.repo === r.full_name ? 'selected' : ''}>${r.name}</option>`).join('')}
+          </select>
+          <select class="select-custom" id="kanban-filter-priority" title="Filter by Priority">
+            <option value="all" ${state.kanbanFilters.priority === 'all' ? 'selected' : ''}>All Priorities</option>
+            <option value="low" ${state.kanbanFilters.priority === 'low' ? 'selected' : ''}>Low</option>
+            <option value="medium" ${state.kanbanFilters.priority === 'medium' ? 'selected' : ''}>Medium</option>
+            <option value="high" ${state.kanbanFilters.priority === 'high' ? 'selected' : ''}>High</option>
+          </select>
+          <button class="btn btn-primary" id="kanban-new-task-btn">
+            <i data-lucide="plus"></i> New Task
+          </button>
         </div>
       </div>
 
       <div class="kanban-board">
         ${columns.map(col => {
-          const colTasks = filteredTasks.filter(t => t.status === col.id);
+          const colTasks = filteredTasks.filter(t => t.status === col.id)
           return `
             <div class="kanban-column" data-column-id="${col.id}">
               <div class="kanban-column-header">
-                <div class="kanban-column-title" style="color: ${col.color}">
-                  <i data-lucide="${col.icon}" style="width: 18px; height: 18px;"></i>
+                <div class="kanban-column-title" style="color:${col.color}">
+                  <i data-lucide="${col.icon}" style="width:16px;height:16px;"></i>
                   ${col.title}
                 </div>
                 <div class="kanban-column-count">${colTasks.length}</div>
@@ -1469,78 +1538,68 @@ function KanbanView() {
               <div class="kanban-column-body" data-column-id="${col.id}">
                 ${colTasks.length === 0 ? `
                   <div class="kanban-empty-state">
-                    <i data-lucide="inbox" style="width: 24px; height: 24px; opacity: 0.4;"></i>
-                    <div>Empty Column</div>
+                    <i data-lucide="inbox" style="width:22px;height:22px;opacity:0.3;"></i>
+                    <div style="font-size:0.8rem;">Empty</div>
                   </div>
                 ` : colTasks.map(task => KanbanTaskCard(task)).join('')}
               </div>
               <button class="kanban-column-add-btn" data-column-id="${col.id}">
-                <i data-lucide="plus" style="width: 14px; height: 14px;"></i> Add Task
+                <i data-lucide="plus" style="width:13px;height:13px;"></i> Add Task
               </button>
             </div>
-          `;
+          `
         }).join('')}
       </div>
 
-      <!-- Add/Edit Task Modal -->
       <div class="modal-overlay" id="kanban-task-modal-overlay">
-        <div class="modal glass-panel">
-          <button class="modal-close" id="close-kanban-task-modal-btn">
-            <i data-lucide="x"></i>
-          </button>
-          <h2 id="kanban-modal-title" style="margin-bottom: 0.5rem;">Create New Task</h2>
-          <p style="color: var(--text-dim); font-size: 0.875rem; margin-bottom: 2rem;">Add a new item to your board.</p>
-          
+        <div class="modal">
+          <button class="modal-close" id="close-kanban-task-modal-btn"><i data-lucide="x"></i></button>
+          <div class="modal-header">
+            <div class="modal-title" id="kanban-modal-title">Create New Task</div>
+            <div class="modal-subtitle">Add a new item to your board.</div>
+          </div>
           <input type="hidden" id="kanban-task-id">
-
           <div class="input-group">
             <label>Task Title</label>
             <input type="text" id="kanban-task-title" placeholder="Fix DNS settings...">
           </div>
-
           <div class="input-group">
             <label>Description</label>
-            <textarea id="kanban-task-desc" class="select-custom" style="width: 100%; min-height: 80px; font-family: var(--font-sans); resize: vertical; border: 1px solid var(--border-subtle); background: var(--bg-elevated); color: var(--text-main); border-radius: var(--radius-sm); padding: 0.75rem 1rem;" placeholder="Detailed steps or notes..."></textarea>
+            <textarea id="kanban-task-desc" style="width:100%;min-height:80px;font-family:var(--font-sans);resize:vertical;border:1px solid var(--border-subtle);background:var(--bg-elevated);color:var(--text-primary);border-radius:var(--radius-sm);padding:0.75rem 1rem;" placeholder="Detailed steps or notes..."></textarea>
           </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-            <div class="input-group" style="margin-bottom: 0;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div class="input-group" style="margin:0;">
               <label>Status</label>
-              <select class="select-custom" id="kanban-task-status" style="width: 100%;">
+              <select class="select-custom" id="kanban-task-status" style="width:100%;">
                 <option value="backlog">Backlog</option>
                 <option value="todo">To Do</option>
                 <option value="in_progress">In Progress</option>
                 <option value="done">Done</option>
               </select>
             </div>
-
-            <div class="input-group" style="margin-bottom: 0;">
+            <div class="input-group" style="margin:0;">
               <label>Priority</label>
-              <select class="select-custom" id="kanban-task-priority" style="width: 100%;">
+              <select class="select-custom" id="kanban-task-priority" style="width:100%;">
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
               </select>
             </div>
           </div>
-
           <div class="input-group">
             <label>Associated GitHub Repo (optional)</label>
-            <select class="select-custom" id="kanban-task-repo" style="width: 100%;">
+            <select class="select-custom" id="kanban-task-repo" style="width:100%;">
               <option value="">None</option>
-              ${allRepos.map(r => `
-                <option value="${r.full_name}">${r.full_name}</option>
-              `).join('')}
+              ${allRepos.map(r => `<option value="${r.full_name}">${r.full_name}</option>`).join('')}
             </select>
           </div>
-
-          <button class="btn btn-primary" id="save-kanban-task-btn" style="width: 100%; margin-top: 1rem;">
-            Save Task
+          <button class="btn btn-primary" id="save-kanban-task-btn" style="width:100%;">
+            <i data-lucide="save"></i> Save Task
           </button>
         </div>
       </div>
-    </main>
-  `;
+    </div>
+  `
 }
 
 function KanbanTaskCard(task) {
@@ -1692,24 +1751,25 @@ function IndexNowView() {
   const history = state.indexnowHistory || []
 
   return `
-    <main class="container">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-        <div>
-          <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">IndexNow Console</h1>
-          <p style="color: var(--text-dim);">Submit URLs directly to search engines to index your pages instantly.</p>
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 class="page-title">IndexNow Console</h1>
+          <p class="page-subtitle">Submit URLs directly to search engines to index your pages instantly</p>
         </div>
       </div>
 
       <div class="indexnow-grid">
         <!-- Configuration Panel -->
-        <div class="indexnow-panel glass-panel">
-          <div class="indexnow-panel-title">
-            <i data-lucide="settings" style="width: 20px; height: 20px;"></i> Configuration
+        <div class="card card-padded">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1.5rem;font-family:var(--font-display);font-size:1.1rem;font-weight:600;color:var(--text-primary);">
+            <i data-lucide="settings" style="width:20px;height:20px;color:var(--accent);"></i>
+            Configuration
           </div>
 
           <div class="input-group">
             <label>Select Domain</label>
-            <select class="select-custom" id="indexnow-domain-select" style="width: 100%;">
+            <select class="select-custom" id="indexnow-domain-select" style="width:100%;">
               ${allZones.length === 0 ? `
                 <option value="">No Cloudflare domains found</option>
               ` : allZones.map(z => `
@@ -1718,59 +1778,59 @@ function IndexNowView() {
             </select>
           </div>
 
-          <div class="input-group">
+          <div class="input-group" style="margin-top:1.25rem;">
             <label>IndexNow Key</label>
-            <div style="display: flex; gap: 0.5rem;">
-              <input type="text" id="indexnow-key-input" placeholder="Generate or enter a key..." value="${currentKey}" style="flex: 1;">
-              <button class="btn btn-outline" id="indexnow-generate-key-btn" title="Generate API Key">
+            <div style="display:flex;gap:0.5rem;">
+              <input type="text" id="indexnow-key-input" placeholder="Generate or enter a key..." value="${currentKey}" style="flex:1;">
+              <button class="btn btn-outline" id="indexnow-generate-key-btn" title="Generate API Key" style="white-space:nowrap;">
                 <i data-lucide="refresh-cw"></i> Generate
               </button>
             </div>
-            <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.5rem;">
+            <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;">
               Must be 8 to 128 hex or alphanumeric characters.
             </p>
           </div>
 
           ${currentKey ? `
-            <div class="glass-panel" style="padding: 1rem; background: var(--bg-deep); border-color: var(--border-subtle); display: flex; flex-direction: column; gap: 0.75rem;">
-              <div style="font-size: 0.8rem; font-weight: 600; color: var(--warning); display: flex; align-items: center; gap: 4px;">
-                <i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i> Key Verification Required
+            <div class="card card-padded" style="margin-top:1.5rem;background:var(--bg-void);border-color:rgba(234,179,8,0.15);display:flex;flex-direction:column;gap:0.75rem;">
+              <div style="font-size:0.8rem;font-weight:600;color:var(--warning);display:flex;align-items:center;gap:6px;">
+                <i data-lucide="alert-triangle" style="width:14px;height:14px;"></i> Key Verification Required
               </div>
-              <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; margin: 0;">
-                You must host a text file named <code style="color: var(--primary)">${currentKey}.txt</code> at the root of your domain.
+              <p style="font-size:0.75rem;color:var(--text-secondary);line-height:1.4;margin:0;">
+                You must host a text file named <code style="color:var(--accent-light);font-family:var(--font-mono);">${currentKey}.txt</code> at the root of your domain.
               </p>
-              <div style="font-size: 0.75rem; color: var(--text-dim); word-break: break-all; font-family: var(--font-mono);">
-                Target URL: <a href="https://${selectedDomain}/${currentKey}.txt" target="_blank" style="color: var(--primary); text-decoration: underline;">https://${selectedDomain}/${currentKey}.txt</a>
+              <div style="font-size:0.75rem;color:var(--text-muted);word-break:break-all;font-family:var(--font-mono);">
+                Target URL: <a href="https://${selectedDomain}/${currentKey}.txt" target="_blank" style="color:var(--accent);text-decoration:underline;">https://${selectedDomain}/${currentKey}.txt</a>
               </div>
-              <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
-                <button class="btn btn-outline" id="indexnow-download-key-btn" style="flex: 1; padding: 0.4rem; font-size: 0.8rem;">
-                  <i data-lucide="download" style="width: 14px;"></i> Download Key
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-top:0.25rem;">
+                <button class="btn btn-outline btn-sm" id="indexnow-download-key-btn">
+                  <i data-lucide="download"></i> Download
                 </button>
-                <button class="btn btn-outline" id="indexnow-copy-key-btn" style="flex: 1; padding: 0.4rem; font-size: 0.8rem;">
-                  <i data-lucide="copy" style="width: 14px;"></i> Copy Key
+                <button class="btn btn-outline btn-sm" id="indexnow-copy-key-btn">
+                  <i data-lucide="copy"></i> Copy
                 </button>
-                <button class="btn btn-outline" id="indexnow-verify-key-btn" style="flex: 1; padding: 0.4rem; font-size: 0.8rem; border-color: var(--warning); color: var(--warning);">
-                  <i data-lucide="shield-check" style="width: 14px;"></i> Verify Hosting
+                <button class="btn btn-outline btn-sm" id="indexnow-verify-key-btn" style="border-color:var(--warning);color:var(--warning);">
+                  <i data-lucide="shield-check"></i> Verify
                 </button>
               </div>
               ${state.indexnowVerification && state.indexnowVerification[selectedDomain] ? `
-                <div style="font-size: 0.75rem; display: flex; align-items: center; gap: 4px; padding: 0.4rem 0.6rem; border-radius: 4px; margin-top: 0.25rem; 
+                <div style="font-size: 0.75rem; display: flex; align-items: center; gap: 6px; padding: 0.5rem 0.75rem; border-radius: var(--radius-xs); margin-top: 0.25rem; 
                   background: ${
-                    state.indexnowVerification[selectedDomain].status === 'verified' ? 'rgba(46, 204, 113, 0.1)' : 
-                    state.indexnowVerification[selectedDomain].status === 'verifying' ? 'rgba(52, 152, 219, 0.1)' : 'rgba(231, 76, 60, 0.1)'
+                    state.indexnowVerification[selectedDomain].status === 'verified' ? 'var(--success-dim)' : 
+                    state.indexnowVerification[selectedDomain].status === 'verifying' ? 'var(--accent-dim)' : 'var(--error-dim)'
                   }; 
                   color: ${
-                    state.indexnowVerification[selectedDomain].status === 'verified' ? '#2ecc71' : 
-                    state.indexnowVerification[selectedDomain].status === 'verifying' ? '#3498db' : '#e74c3c'
+                    state.indexnowVerification[selectedDomain].status === 'verified' ? 'var(--success)' : 
+                    state.indexnowVerification[selectedDomain].status === 'verifying' ? 'var(--accent-light)' : 'var(--error)'
                   };
                   border: 1px solid ${
-                    state.indexnowVerification[selectedDomain].status === 'verified' ? 'rgba(46, 204, 113, 0.2)' : 
-                    state.indexnowVerification[selectedDomain].status === 'verifying' ? 'rgba(52, 152, 219, 0.2)' : 'rgba(231, 76, 60, 0.2)'
+                    state.indexnowVerification[selectedDomain].status === 'verified' ? 'rgba(34, 197, 94, 0.2)' : 
+                    state.indexnowVerification[selectedDomain].status === 'verifying' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(239, 68, 68, 0.2)'
                   };">
                   <i data-lucide="${
                     state.indexnowVerification[selectedDomain].status === 'verified' ? 'check-circle' : 
                     state.indexnowVerification[selectedDomain].status === 'verifying' ? 'loader' : 'x-circle'
-                  }" class="${state.indexnowVerification[selectedDomain].status === 'verifying' ? 'spin' : ''}" style="width: 14px; height: 14px; min-width: 14px; ${state.indexnowVerification[selectedDomain].status === 'verifying' ? 'animation: spin 1s linear infinite;' : ''}"></i>
+                  }" class="${state.indexnowVerification[selectedDomain].status === 'verifying' ? 'spin' : ''}" style="width: 14px; height: 14px; min-width: 14px;"></i>
                   <span style="flex: 1; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${state.indexnowVerification[selectedDomain].message}</span>
                 </div>
               ` : ''}
@@ -1779,94 +1839,97 @@ function IndexNowView() {
         </div>
 
         <!-- Submit Panel -->
-        <div class="indexnow-panel glass-panel">
-          <div class="indexnow-panel-title">
-            <i data-lucide="send" style="width: 20px; height: 20px;"></i> Submit URLs
-          </div>
-
-          <div class="input-group" style="flex: 1; display: flex; flex-direction: column;">
-            <label style="display: flex; justify-content: space-between; align-items: center;">
-              <span>URLs to Index (one per line)</span>
-              ${selectedDomain ? `
-                <div style="display: flex; gap: 0.5rem;">
-                  <button class="btn-icon" id="indexnow-import-sitemap-btn" title="Fetch URLs from robots.txt & sitemaps" style="width: auto; height: auto; padding: 2px 8px; font-size: 0.75rem; font-family: var(--font-sans); display: inline-flex; align-items: center; gap: 4px; background: var(--bg-elevated); color: var(--warning); border: 1px solid var(--border-subtle);">
-                    <i data-lucide="globe" style="width: 12px; height: 12px;"></i> Import Sitemap
-                  </button>
-                  <button class="btn-icon" id="indexnow-prepend-domain-btn" title="Add prefix 'https://${selectedDomain}' to lines" style="width: auto; height: auto; padding: 2px 8px; font-size: 0.75rem; font-family: var(--font-sans); display: inline-flex; align-items: center; gap: 4px; background: var(--bg-elevated); color: var(--primary); border: 1px solid var(--border-subtle);">
-                    <i data-lucide="plus" style="width: 12px; height: 12px;"></i> Prepend Domain
-                  </button>
-                </div>
-              ` : ''}
-            </label>
-            <textarea id="indexnow-urls-input" class="indexnow-textarea" style="flex: 1;" placeholder="https://${selectedDomain || 'example.com'}/page-1&#10;https://${selectedDomain || 'example.com'}/blog/post-1"></textarea>
-          </div>
-
-          <div style="display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0 1rem 0; font-size: 0.85rem; color: var(--text-dim);">
-            <input type="checkbox" id="indexnow-individual-checkbox" ${state.indexnowSubmitIndividually ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--primary);">
-            <label for="indexnow-individual-checkbox" style="cursor: pointer; user-select: none;">Submit URLs individually (Slow, but isolates errors)</label>
-          </div>
-
-          ${state.indexnowProgress && state.indexnowProgress.running ? `
-            <div class="glass-panel" style="padding: 1rem; margin-bottom: 1rem; border-color: var(--primary-subtle); background: var(--bg-deep); display: flex; flex-direction: column; gap: 0.5rem;">
-              <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600;">
-                <span style="color: var(--primary); display: flex; align-items: center; gap: 4px;">
-                  <i data-lucide="loader" class="spin" style="width: 14px; height: 14px; animation: spin 1s linear infinite;"></i>
-                  Indexing URLs...
-                </span>
-                <span style="color: var(--text-main);">${state.indexnowProgress.current} / ${state.indexnowProgress.total}</span>
-              </div>
-              <div style="width: 100%; height: 6px; background: var(--border-subtle); border-radius: 3px; overflow: hidden;">
-                <div style="height: 100%; width: ${(state.indexnowProgress.current / state.indexnowProgress.total) * 100}%; background: var(--primary); transition: width 0.15s ease;"></div>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
-                <div style="display: flex; gap: 0.75rem; color: var(--text-dim);">
-                  <span style="color: #2ecc71; font-weight: 500;">✓ Success: ${state.indexnowProgress.successes}</span>
-                  <span style="color: #e74c3c; font-weight: 500;">✗ Failed: ${state.indexnowProgress.failures}</span>
-                </div>
-                <button class="btn btn-outline danger" id="indexnow-cancel-btn" style="padding: 0.2rem 0.5rem; font-size: 0.7rem; height: auto; width: auto;">Cancel</button>
-              </div>
+        <div class="card card-padded" style="display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1.5rem;font-family:var(--font-display);font-size:1.1rem;font-weight:600;color:var(--text-primary);">
+              <i data-lucide="send" style="width:20px;height:20px;color:var(--accent);"></i>
+              Submit URLs
             </div>
-          ` : ''}
 
-          ${state.indexnowProgress && !state.indexnowProgress.running && state.indexnowProgress.total > 0 && state.indexnowProgress.failures > 0 ? `
-            <div class="glass-panel" style="padding: 1rem; margin-bottom: 1rem; border-color: rgba(231, 76, 60, 0.3); background: rgba(231, 76, 60, 0.05); display: flex; flex-direction: column; gap: 0.5rem;">
-              <div style="font-size: 0.8rem; font-weight: 600; color: #e74c3c; display: flex; align-items: center; gap: 4px;">
-                <i data-lucide="alert-circle" style="width: 14px; height: 14px;"></i> Submission completed with ${state.indexnowProgress.failures} error(s)
-              </div>
-              <div style="max-height: 100px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 2px; padding-right: 4px;">
-                ${state.indexnowProgress.results.filter(r => r.status >= 400).map(r => `
-                  <div style="display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 2px;">
-                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;" title="${r.url}">${r.url}</span>
-                    <span style="color: #e74c3c; font-weight: 600;">Status ${r.status}</span>
+            <div class="input-group" style="display:flex;flex-direction:column;min-height:220px;margin-bottom:1rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                <label style="margin:0;">URLs to Index (one per line)</label>
+                ${selectedDomain ? `
+                  <div style="display:flex;gap:0.375rem;">
+                    <button class="btn btn-outline btn-xs" id="indexnow-import-sitemap-btn" title="Fetch URLs from robots.txt & sitemaps" style="color:var(--warning);border-color:var(--warning-dim);">
+                      <i data-lucide="globe" style="width:12px;height:12px;"></i> Sitemap
+                    </button>
+                    <button class="btn btn-outline btn-xs" id="indexnow-prepend-domain-btn" title="Add prefix 'https://${selectedDomain}' to lines">
+                      <i data-lucide="plus" style="width:12px;height:12px;"></i> Prepend Domain
+                    </button>
                   </div>
-                `).join('')}
+                ` : ''}
               </div>
+              <textarea id="indexnow-urls-input" class="indexnow-textarea" style="flex:1;min-height:150px;width:100%;font-family:var(--font-mono);font-size:0.8rem;border:1px solid var(--border-subtle);background:var(--bg-void);color:var(--text-primary);border-radius:var(--radius-sm);padding:0.75rem 1rem;" placeholder="https://${selectedDomain || 'example.com'}/page-1&#10;https://${selectedDomain || 'example.com'}/blog/post-1"></textarea>
             </div>
-          ` : ''}
 
-          <button class="btn btn-primary" id="indexnow-submit-btn" style="width: 100%;" ${state.indexnowProgress && state.indexnowProgress.running ? 'disabled' : ''}>
-            <i data-lucide="zap" style="width: 16px; height: 16px;"></i> Submit to IndexNow
+            <div style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0 1rem 0;font-size:0.85rem;color:var(--text-secondary);">
+              <input type="checkbox" id="indexnow-individual-checkbox" ${state.indexnowSubmitIndividually ? 'checked' : ''} style="cursor:pointer;width:15px;height:15px;accent-color:var(--accent);">
+              <label for="indexnow-individual-checkbox" style="cursor:pointer;user-select:none;margin:0;">Submit URLs individually (slow but isolates errors)</label>
+            </div>
+
+            ${state.indexnowProgress && state.indexnowProgress.running ? `
+              <div class="card card-padded" style="margin-bottom:1.25rem;border-color:var(--accent);background:var(--bg-void);display:flex;flex-direction:column;gap:0.5rem;">
+                <div style="display:flex;justify-content:space-between;font-size:0.8rem;font-weight:600;">
+                  <span style="color:var(--accent-light);display:flex;align-items:center;gap:4px;">
+                    <i data-lucide="loader" class="spin" style="width:14px;height:14px;"></i>
+                    Indexing URLs...
+                  </span>
+                  <span style="color:var(--text-primary);">${state.indexnowProgress.current} / ${state.indexnowProgress.total}</span>
+                </div>
+                <div style="width:100%;height:6px;background:var(--bg-elevated);border-radius:var(--radius-full);overflow:hidden;">
+                  <div style="height:100%;width:${(state.indexnowProgress.current / state.indexnowProgress.total) * 100}%;background:var(--accent);transition:width 0.15s ease;"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;">
+                  <div style="display:flex;gap:0.75rem;color:var(--text-secondary);">
+                    <span style="color:var(--success);font-weight:500;">✓ Success: ${state.indexnowProgress.successes}</span>
+                    <span style="color:var(--error);font-weight:500;">✗ Failed: ${state.indexnowProgress.failures}</span>
+                  </div>
+                  <button class="btn btn-danger btn-xs" id="indexnow-cancel-btn">Cancel</button>
+                </div>
+              </div>
+            ` : ''}
+
+            ${state.indexnowProgress && !state.indexnowProgress.running && state.indexnowProgress.total > 0 && state.indexnowProgress.failures > 0 ? `
+              <div class="card card-padded" style="margin-bottom:1.25rem;border-color:var(--error);background:var(--error-dim);display:flex;flex-direction:column;gap:0.5rem;">
+                <div style="font-size:0.8rem;font-weight:600;color:var(--error);display:flex;align-items:center;gap:4px;">
+                  <i data-lucide="alert-circle" style="width:14px;height:14px;"></i> Submission completed with ${state.indexnowProgress.failures} error(s)
+                </div>
+                <div style="max-height:100px;overflow-y:auto;font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);display:flex;flex-direction:column;gap:4px;padding-right:4px;">
+                  ${state.indexnowProgress.results.filter(r => r.status >= 400).map(r => `
+                    <div style="display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--border-subtle);padding-bottom:2px;">
+                      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;" title="${r.url}">${r.url}</span>
+                      <span style="color:var(--error);font-weight:600;">Status ${r.status}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+
+          <button class="btn btn-primary" id="indexnow-submit-btn" style="width:100%;margin-top:1rem;" ${state.indexnowProgress && state.indexnowProgress.running ? 'disabled' : ''}>
+            <i data-lucide="zap" style="width:16px;height:16px;"></i> Submit to IndexNow
           </button>
         </div>
       </div>
 
       <!-- History Table -->
-      <div class="glass-panel" style="padding: 1.5rem; margin-top: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
-          <h3 style="font-size: 1.15rem; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
-            <i data-lucide="history" style="width: 20px; height: 20px; color: var(--primary);"></i> Submission History
+      <div class="card card-padded" style="margin-top:1.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;border-bottom:1px solid var(--border-subtle);padding-bottom:0.75rem;">
+          <h3 style="font-size:1.1rem;font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:0.5rem;font-family:var(--font-display);">
+            <i data-lucide="history" style="width:20px;height:20px;color:var(--accent);"></i> Submission History
           </h3>
           ${history.length > 0 ? `
-            <button class="btn btn-outline danger" id="indexnow-clear-history-btn" style="padding: 0.4rem 1rem; font-size: 0.8rem; height: auto;">
-              <i data-lucide="trash-2" style="width: 14px;"></i> Clear History
+            <button class="btn btn-danger btn-sm" id="indexnow-clear-history-btn">
+              <i data-lucide="trash-2"></i> Clear History
             </button>
           ` : ''}
         </div>
 
-        <div style="overflow-x: auto;">
+        <div style="overflow-x:auto;">
           ${history.length === 0 ? `
-            <div style="text-align: center; padding: 3rem; color: var(--text-dim);">
-              <i data-lucide="database" style="width: 32px; height: 32px; opacity: 0.3; margin-bottom: 0.5rem;"></i>
+            <div class="empty-state" style="padding:2rem;">
+              <i data-lucide="database" class="empty-state-icon"></i>
               <div>No submission history found</div>
             </div>
           ` : `
@@ -1883,22 +1946,22 @@ function IndexNowView() {
               <tbody>
                 ${history.slice().reverse().map(h => `
                   <tr>
-                    <td style="font-weight: 600; color: var(--primary);">${h.domain}</td>
-                    <td style="color: var(--text-muted);">${new Date(h.submittedAt).toLocaleString()}</td>
+                    <td style="font-weight:600;color:var(--accent-light);">${h.domain}</td>
+                    <td style="color:var(--text-secondary);">${new Date(h.submittedAt).toLocaleString()}</td>
                     <td>
-                      <span class="chip" style="padding: 1px 8px; border-radius: 4px; font-size: 0.75rem; margin: 0; background: var(--bg-elevated);">
+                      <span class="badge badge-muted" style="padding:2px 8px;border-radius:4px;font-size:0.75rem;margin:0;">
                         ${h.urlsCount} ${h.isIndividual ? '(Indiv)' : '(Bulk)'}
                       </span>
                       ${h.isIndividual && h.failures > 0 ? `
-                        <span style="color: #e74c3c; font-size: 0.7rem; font-weight: 600; margin-left: 4px;">(${h.failures} failed)</span>
+                        <span style="color:var(--error);font-size:0.7rem;font-weight:600;margin-left:4px;">(${h.failures} failed)</span>
                       ` : ''}
                     </td>
-                    <td style="max-width: 300px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${h.urls.join('\n')}">
+                    <td style="max-width:300px;font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" title="${h.urls.join('\n')}">
                       ${h.urls.join(', ')}
                     </td>
                     <td>
                       <span class="indexnow-status-badge ${h.status >= 200 && h.status < 300 ? 'indexnow-status-success' : 'indexnow-status-error'}">
-                        <i data-lucide="${h.status >= 200 && h.status < 300 ? 'check-circle' : 'alert-circle'}" style="width: 12px; height: 12px;"></i>
+                        <i data-lucide="${h.status >= 200 && h.status < 300 ? 'check-circle' : 'alert-circle'}" style="width:12px;height:12px;"></i>
                         ${h.status} ${h.status === 200 ? 'OK' : (h.status === 202 ? 'Accepted' : 'Error')}
                       </span>
                     </td>
@@ -1909,7 +1972,7 @@ function IndexNowView() {
           `}
         </div>
       </div>
-    </main>
+    </div>
   `
 }
 
@@ -1928,24 +1991,25 @@ function DomainCheckerView() {
   const progress = state.domainCheckerProgress || { running: false, total: 0, current: 0, successes: 0, redirects: 0, errors: 0 }
 
   return `
-    <main class="container">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-        <div>
-          <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Domain Checker</h1>
-          <p style="color: var(--text-dim);">Audit website URLs to check response status, load times, page sizes, and HTML titles.</p>
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 class="page-title">Domain Checker</h1>
+          <p class="page-subtitle">Audit website URLs to check response status, load times, page sizes, and HTML titles</p>
         </div>
       </div>
 
       <div class="indexnow-grid">
         <!-- Configuration Panel -->
-        <div class="indexnow-panel glass-panel">
-          <div class="indexnow-panel-title">
-            <i data-lucide="settings" style="width: 20px; height: 20px;"></i> Configuration
+        <div class="card card-padded">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1.5rem;font-family:var(--font-display);font-size:1.1rem;font-weight:600;color:var(--text-primary);">
+            <i data-lucide="settings" style="width:20px;height:20px;color:var(--accent);"></i>
+            Configuration
           </div>
 
           <div class="input-group">
             <label>Select Domain</label>
-            <select class="select-custom" id="domainchecker-domain-select" style="width: 100%;">
+            <select class="select-custom" id="domainchecker-domain-select" style="width:100%;">
               ${allZones.length === 0 ? `
                 <option value="">No Cloudflare domains found</option>
               ` : allZones.map(z => `
@@ -1954,134 +2018,137 @@ function DomainCheckerView() {
             </select>
           </div>
 
-          <div class="input-group" style="flex: 1; display: flex; flex-direction: column; margin-top: 1rem;">
-            <label style="display: flex; justify-content: space-between; align-items: center;">
-              <span>URLs to Check (one per line)</span>
+          <div class="input-group" style="display:flex;flex-direction:column;min-height:220px;margin-top:1.25rem;margin-bottom:1rem;flex:1;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+              <label style="margin:0;">URLs to Check (one per line)</label>
               ${selectedDomain ? `
-                <button class="btn-icon" id="domainchecker-import-sitemap-btn" title="Fetch URLs from robots.txt & sitemaps" style="width: auto; height: auto; padding: 2px 8px; font-size: 0.75rem; font-family: var(--font-sans); display: inline-flex; align-items: center; gap: 4px; background: var(--bg-elevated); color: var(--warning); border: 1px solid var(--border-subtle);">
-                  <i data-lucide="globe" style="width: 12px; height: 12px;"></i> Import Sitemap
+                <button class="btn btn-outline btn-xs" id="domainchecker-import-sitemap-btn" title="Fetch URLs from robots.txt & sitemaps" style="color:var(--warning);border-color:var(--warning-dim);">
+                  <i data-lucide="globe" style="width:12px;height:12px;"></i> Sitemap
                 </button>
               ` : ''}
-            </label>
-            <textarea id="domainchecker-urls-input" class="indexnow-textarea" style="flex: 1; min-height: 200px;" placeholder="https://${selectedDomain || 'example.com'}/page-1&#10;https://${selectedDomain || 'example.com'}/blog/post-1">${urlsText}</textarea>
+            </div>
+            <textarea id="domainchecker-urls-input" class="indexnow-textarea" style="flex:1;min-height:180px;font-family:var(--font-mono);font-size:0.8rem;border:1px solid var(--border-subtle);background:var(--bg-void);color:var(--text-primary);border-radius:var(--radius-sm);padding:0.75rem 1rem;" placeholder="https://${selectedDomain || 'example.com'}/page-1&#10;https://${selectedDomain || 'example.com'}/blog/post-1">${urlsText}</textarea>
           </div>
 
-          <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-            <button class="btn btn-primary" id="domainchecker-start-btn" style="flex: 2;" ${progress.running ? 'disabled' : ''}>
-              <i data-lucide="play" style="width: 16px; height: 16px;"></i> Start Check
+          <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+            <button class="btn btn-primary" id="domainchecker-start-btn" style="flex:2;" ${progress.running ? 'disabled' : ''}>
+              <i data-lucide="play" style="width:16px;height:16px;"></i> Start Check
             </button>
             ${progress.running ? `
-              <button class="btn btn-outline danger" id="domainchecker-cancel-btn" style="flex: 1;">
-                <i data-lucide="square" style="width: 16px; height: 16px;"></i> Cancel
+              <button class="btn btn-danger" id="domainchecker-cancel-btn" style="flex:1;">
+                <i data-lucide="square" style="width:16px;height:16px;"></i> Cancel
               </button>
             ` : `
-              <button class="btn btn-outline" id="domainchecker-clear-btn" style="flex: 1;">
-                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i> Clear
+              <button class="btn btn-outline" id="domainchecker-clear-btn" style="flex:1;">
+                <i data-lucide="trash-2" style="width:16px;height:16px;"></i> Clear
               </button>
             `}
           </div>
         </div>
 
         <!-- Audit Progress & Results Summary -->
-        <div class="indexnow-panel glass-panel" style="display: flex; flex-direction: column;">
-          <div class="indexnow-panel-title">
-            <i data-lucide="activity" style="width: 20px; height: 20px;"></i> Audit Summary
-          </div>
+        <div class="card card-padded" style="display:flex;flex-direction:column;justify-content:space-between;height:100%;">
+          <div>
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1.5rem;font-family:var(--font-display);font-size:1.1rem;font-weight:600;color:var(--text-primary);">
+              <i data-lucide="activity" style="width:20px;height:20px;color:var(--accent);"></i>
+              Audit Summary
+            </div>
 
-          ${progress.running ? `
-            <div class="glass-panel" style="padding: 1rem; margin-bottom: 1.5rem; border-color: var(--primary-subtle); background: var(--bg-deep); display: flex; flex-direction: column; gap: 0.5rem;">
-              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                <span style="color: var(--primary); display: flex; align-items: center; gap: 4px;">
-                  <i data-lucide="loader" class="spin" style="width: 14px; height: 14px; animation: spin 1s linear infinite;"></i>
-                  Auditing URLs...
-                </span>
-                <span style="color: var(--text-main);">${progress.current} / ${progress.total} (${Math.round((progress.current / progress.total) * 100) || 0}%)</span>
+            ${progress.running ? `
+              <div class="card card-padded" style="margin-bottom:1.25rem;border-color:var(--accent);background:var(--bg-void);display:flex;flex-direction:column;gap:0.5rem;">
+                <div style="display:flex;justify-content:space-between;font-size:0.85rem;font-weight:600;">
+                  <span style="color:var(--accent-light);display:flex;align-items:center;gap:4px;">
+                    <i data-lucide="loader" class="spin" style="width:14px;height:14px;"></i>
+                    Auditing URLs...
+                  </span>
+                  <span style="color:var(--text-primary);">${progress.current} / ${progress.total} (${Math.round((progress.current / progress.total) * 100) || 0}%)</span>
+                </div>
+                <div style="width:100%;height:8px;background:var(--bg-elevated);border-radius:var(--radius-full);overflow:hidden;">
+                  <div style="height:100%;width:${(progress.current / progress.total) * 100}%;background:var(--accent);transition:width 0.15s ease;"></div>
+                </div>
               </div>
-              <div style="width: 100%; height: 8px; background: var(--border-subtle); border-radius: 4px; overflow: hidden;">
-                <div style="height: 100%; width: ${(progress.current / progress.total) * 100}%; background: var(--primary); transition: width 0.15s ease;"></div>
+            ` : ''}
+
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin-bottom:1.25rem;">
+              <div class="card" style="padding:0.75rem;text-align:center;background:rgba(255,255,255,0.01);">
+                <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Total</div>
+                <div style="font-size:1.5rem;font-weight:700;color:var(--text-primary);margin-top:0.25rem;">${progress.total || results.length}</div>
+              </div>
+              <div class="card" style="padding:0.75rem;text-align:center;background:var(--success-dim);border-color:rgba(34,197,94,0.15);">
+                <div style="font-size:0.7rem;color:var(--success);text-transform:uppercase;letter-spacing:0.05em;">Success</div>
+                <div style="font-size:1.5rem;font-weight:700;color:var(--success);margin-top:0.25rem;">${progress.successes}</div>
+              </div>
+              <div class="card" style="padding:0.75rem;text-align:center;background:var(--warning-dim);border-color:rgba(234,179,8,0.15);">
+                <div style="font-size:0.7rem;color:var(--warning);text-transform:uppercase;letter-spacing:0.05em;">Redirect</div>
+                <div style="font-size:1.5rem;font-weight:700;color:var(--warning);margin-top:0.25rem;">${progress.redirects}</div>
+              </div>
+              <div class="card" style="padding:0.75rem;text-align:center;background:var(--error-dim);border-color:rgba(239,68,68,0.15);">
+                <div style="font-size:0.7rem;color:var(--error);text-transform:uppercase;letter-spacing:0.05em;">Error</div>
+                <div style="font-size:1.5rem;font-weight:700;color:var(--error);margin-top:0.25rem;">${progress.errors}</div>
               </div>
             </div>
-          ` : ''}
 
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; overflow: visible;">
-            <div class="glass-panel" style="padding: 1rem; text-align: center; background: rgba(255,255,255,0.02);">
-              <div style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">Total</div>
-              <div style="font-size: 1.8rem; font-weight: 700; color: var(--text-main); margin-top: 0.25rem;">${progress.total || results.length}</div>
-            </div>
-            <div class="glass-panel" style="padding: 1rem; text-align: center; background: rgba(46, 204, 113, 0.05); border-color: rgba(46, 204, 113, 0.2);">
-              <div style="font-size: 0.75rem; color: #2ecc71; text-transform: uppercase;">Success (2xx)</div>
-              <div style="font-size: 1.8rem; font-weight: 700; color: #2ecc71; margin-top: 0.25rem;">${progress.successes}</div>
-            </div>
-            <div class="glass-panel" style="padding: 1rem; text-align: center; background: rgba(241, 196, 15, 0.05); border-color: rgba(241, 196, 15, 0.2);">
-              <div style="font-size: 0.75rem; color: #f1c40f; text-transform: uppercase;">Redirect (3xx)</div>
-              <div style="font-size: 1.8rem; font-weight: 700; color: #f1c40f; margin-top: 0.25rem;">${progress.redirects}</div>
-            </div>
-            <div class="glass-panel" style="padding: 1rem; text-align: center; background: rgba(231, 76, 60, 0.05); border-color: rgba(231, 76, 60, 0.2);">
-              <div style="font-size: 0.75rem; color: #e74c3c; text-transform: uppercase;">Error (4xx/5xx)</div>
-              <div style="font-size: 1.8rem; font-weight: 700; color: #e74c3c; margin-top: 0.25rem;">${progress.errors}</div>
-            </div>
-          </div>
-
-          ${results.length > 0 ? `
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem;">
-              <button class="btn btn-outline" id="domainchecker-export-btn" style="padding: 0.4rem 1rem; font-size: 0.8rem; height: auto; width: auto;">
-                <i data-lucide="download" style="width: 14px; height: 14px;"></i> Export CSV
-              </button>
-            </div>
-          ` : ''}
-
-          <div style="flex: 1; overflow-y: auto; max-height: 380px; border: 1px solid var(--border-subtle); border-radius: 8px;">
-            ${results.length === 0 ? `
-              <div style="text-align: center; padding: 4rem; color: var(--text-dim);">
-                <i data-lucide="clipboard-list" style="width: 48px; height: 48px; opacity: 0.2; margin-bottom: 0.5rem;"></i>
-                <div>No audit results. Enter URLs and click Start Check.</div>
+            ${results.length > 0 ? `
+              <div style="display:flex;justify-content:flex-end;margin-bottom:0.5rem;">
+                <button class="btn btn-outline btn-sm" id="domainchecker-export-btn">
+                  <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
+                </button>
               </div>
-            ` : `
-              <table class="indexnow-history-table" style="margin: 0; border: none; width: 100%;">
-                <thead>
-                  <tr style="background: var(--bg-deep);">
-                    <th style="border-top-left-radius: 8px;">URL</th>
-                    <th>Status</th>
-                    <th>Response Time</th>
-                    <th>Size</th>
-                    <th style="border-top-right-radius: 8px;">Title</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${results.map(r => {
-                    let statusClass = 'indexnow-status-error';
-                    if (r.status >= 200 && r.status < 300) statusClass = 'indexnow-status-success';
-                    else if (r.status >= 300 && r.status < 400) statusClass = 'indexnow-status-warning';
+            ` : ''}
 
-                    return `
-                      <tr>
-                        <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-mono); font-size: 0.75rem;" title="${r.url}">
-                          <a href="${r.url}" target="_blank" style="color: var(--text-main); text-decoration: underline;">${r.url}</a>
-                        </td>
-                        <td>
-                          <span class="indexnow-status-badge ${statusClass}" style="font-weight: 600;">
-                            ${r.status === -1 ? 'Pending' : r.status === -2 ? 'Timeout/Error' : r.status}
-                          </span>
-                        </td>
-                        <td style="color: var(--text-muted); font-size: 0.75rem;">
-                          ${r.responseTime === -1 ? '-' : `${r.responseTime} ms`}
-                        </td>
-                        <td style="color: var(--text-muted); font-size: 0.75rem;">
-                          ${r.size === -1 ? '-' : `${(r.size / 1024).toFixed(1)} KB`}
-                        </td>
-                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; color: var(--text-dim);" title="${r.title || '-'}">
-                          ${r.title || '-'}
-                        </td>
-                      </tr>
-                    `
-                  }).join('')}
-                </tbody>
-              </table>
-            `}
+            <div style="overflow-y:auto;max-height:280px;border:1px solid var(--border-subtle);border-radius:var(--radius-sm);background:var(--bg-void);">
+              ${results.length === 0 ? `
+                <div class="empty-state" style="padding:3rem;">
+                  <i data-lucide="clipboard-list" class="empty-state-icon" style="opacity:0.2;"></i>
+                  <div style="font-size:0.85rem;">No audit results. Enter URLs and click Start Check.</div>
+                </div>
+              ` : `
+                <table class="indexnow-history-table" style="margin:0;border:none;width:100%;">
+                  <thead>
+                    <tr style="background:var(--bg-elevated);">
+                      <th style="border-top-left-radius:var(--radius-sm);padding:0.5rem 0.75rem;font-size:0.75rem;">URL</th>
+                      <th style="padding:0.5rem 0.75rem;font-size:0.75rem;">Status</th>
+                      <th style="padding:0.5rem 0.75rem;font-size:0.75rem;">Time</th>
+                      <th style="padding:0.5rem 0.75rem;font-size:0.75rem;">Size</th>
+                      <th style="border-top-right-radius:var(--radius-sm);padding:0.5rem 0.75rem;font-size:0.75rem;">Title</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${results.map(r => {
+                      let statusClass = 'indexnow-status-error';
+                      if (r.status >= 200 && r.status < 300) statusClass = 'indexnow-status-success';
+                      else if (r.status >= 300 && r.status < 400) statusClass = 'indexnow-status-warning';
+
+                      return `
+                        <tr>
+                          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font-mono);font-size:0.75rem;padding:0.5rem 0.75rem;" title="${r.url}">
+                            <a href="${r.url}" target="_blank" style="color:var(--text-primary);text-decoration:underline;">${r.url}</a>
+                          </td>
+                          <td style="padding:0.5rem 0.75rem;">
+                            <span class="indexnow-status-badge ${statusClass}" style="font-weight:600;font-size:0.7rem;padding:1px 6px;">
+                              ${r.status === -1 ? 'Pending' : r.status === -2 ? 'Error' : r.status}
+                            </span>
+                          </td>
+                          <td style="color:var(--text-muted);font-size:0.75rem;padding:0.5rem 0.75rem;">
+                            ${r.responseTime === -1 ? '-' : `${r.responseTime} ms`}
+                          </td>
+                          <td style="color:var(--text-muted);font-size:0.75rem;padding:0.5rem 0.75rem;">
+                            ${r.size === -1 ? '-' : `${(r.size / 1024).toFixed(1)} KB`}
+                          </td>
+                          <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.75rem;color:var(--text-muted);padding:0.5rem 0.75rem;" title="${r.title || '-'}">
+                            ${r.title || '-'}
+                          </td>
+                        </tr>
+                      `
+                    }).join('')}
+                  </tbody>
+                </table>
+              `}
+            </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   `
 }
 
@@ -2089,96 +2156,101 @@ function SettingsView() {
   const isConfigured = !!state.googleClientId;
 
   return `
-    <main class="container">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-        <div>
-          <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">System Settings</h1>
-          <p style="color: var(--text-dim);">Configure system settings and external integrations.</p>
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 class="page-title">System Settings</h1>
+          <p class="page-subtitle">Configure system settings and external integrations</p>
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; align-items: start;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.5rem;align-items:start;">
         <!-- Card 1: Google Analytics (GA4) Tracking -->
-        <div class="glass-panel" style="padding: 2rem; border-color: var(--border-subtle); display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+        <div class="card card-padded" style="display:flex;flex-direction:column;justify-content:space-between;min-height:360px;">
           <div>
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-              <i data-lucide="bar-chart-3" style="width: 24px; height: 24px; color: var(--primary);"></i>
-              <h2 style="font-size: 1.25rem; margin-bottom: 0;">Google Analytics (GA4)</h2>
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;">
+              <i data-lucide="bar-chart-3" style="width:24px;height:24px;color:var(--accent);"></i>
+              <h2 style="font-family:var(--font-display);font-size:1.2rem;font-weight:600;margin:0;">Google Analytics (GA4)</h2>
             </div>
-            <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.5rem;">
+            <p style="color:var(--text-secondary);font-size:0.85rem;line-height:1.6;margin-bottom:1.5rem;">
               Track page views and navigation events across your dashboard. Enter your GA4 Measurement ID below.
             </p>
             
-            <div class="input-group" style="margin-bottom: 2rem;">
-              <label style="font-weight: 500; margin-bottom: 0.75rem;">Measurement ID (GA4)</label>
+            <div class="input-group" style="margin-bottom:1.5rem;">
+              <label>Measurement ID (GA4)</label>
               <input type="text" id="settings-ga-id" placeholder="G-XXXXXXXXXX" value="${state.gaId || ''}">
-              <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.5rem;">
+              <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;">
                 e.g., G-B5LDKS73KD. Leave blank to disable.
               </p>
             </div>
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <button class="btn btn-primary" id="save-settings-btn" style="width: 100%;">
-              <i data-lucide="save" style="width: 18px; height: 18px;"></i> Save GA ID
+          <div style="display:flex;flex-direction:column;gap:0.5rem;">
+            <button class="btn btn-primary" id="save-settings-btn" style="width:100%;">
+              <i data-lucide="save"></i> Save GA ID
             </button>
             ${state.gaId ? `
-              <button class="btn btn-outline" id="settings-copy-ga-code-btn" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                <i data-lucide="copy" style="width: 16px; height: 16px;"></i> Copy Tracking Script
+              <button class="btn btn-outline" id="settings-copy-ga-code-btn" style="width:100%;">
+                <i data-lucide="copy"></i> Copy Tracking Script
               </button>
             ` : ''}
           </div>
         </div>
 
         <!-- Card 2: Google OAuth Configuration -->
-        <div class="glass-panel" style="padding: 2rem; border-color: var(--border-subtle);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-              <i data-lucide="key" style="color: #4285f4; width: 24px; height: 24px;"></i>
-              <h2 style="font-size: 1.25rem; margin-bottom: 0;">Google API Configuration</h2>
+        <div class="card card-padded" style="min-height:360px;display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+              <div style="display:flex;align-items:center;gap:0.75rem;">
+                <i data-lucide="key" style="color:var(--ga-blue);width:24px;height:24px;"></i>
+                <h2 style="font-family:var(--font-display);font-size:1.2rem;font-weight:600;margin:0;">Google API</h2>
+              </div>
+              ${isConfigured ? `
+                <button class="btn btn-outline btn-xs" id="edit-google-client-id-btn">
+                  <i data-lucide="edit-2"></i> Edit Config
+                </button>
+              ` : ''}
             </div>
+            <p style="color:var(--text-secondary);font-size:0.85rem;line-height:1.6;margin-bottom:1.5rem;">
+              Configure Client ID & Redirect URI to enable automatic Google Analytics account and property sync.
+            </p>
+            
             ${isConfigured ? `
-              <button class="btn btn-outline" id="edit-google-client-id-btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
-                <i data-lucide="edit-2"></i> Edit Config
-              </button>
-            ` : ''}
+              <div style="display:flex;flex-direction:column;gap:0.75rem;font-size:0.85rem;">
+                <div><span style="color:var(--text-muted);">Client ID:</span> <code style="font-family:var(--font-mono);color:var(--text-secondary);word-break:break-all;">${state.googleClientId}</code></div>
+                <div><span style="color:var(--text-muted);">Redirect URI:</span> <code style="font-family:var(--font-mono);color:var(--accent-light);">${state.googleRedirectUri || window.location.origin}</code></div>
+                <p style="color:var(--text-muted);font-size:0.75rem;margin-top:0.25rem;">
+                  * Make sure the Redirect URI above matches exactly what is configured in your Google Cloud Console.
+                </p>
+              </div>
+            ` : `
+              <div style="display:flex;flex-direction:column;gap:0.875rem;">
+                <div class="input-group" style="margin:0;">
+                  <label>Google Client ID</label>
+                  <input type="text" id="google-client-id-input" placeholder="xxx.apps.googleusercontent.com">
+                </div>
+                <div class="input-group" style="margin:0;">
+                  <label>OAuth Redirect URI</label>
+                  <input type="text" id="google-redirect-uri-input" value="${state.googleRedirectUri || window.location.origin + '/'}">
+                </div>
+              </div>
+            `}
           </div>
-          <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.5rem;">
-            Configure Client ID & Redirect URI to enable automatic Google Analytics account and property sync.
-          </p>
-          
-          ${isConfigured ? `
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem;">
-              <div><strong>Client ID:</strong> <code style="font-family: var(--font-mono); color: var(--text-muted); word-break: break-all;">${state.googleClientId}</code></div>
-              <div><strong>Redirect URI:</strong> <code style="font-family: var(--font-mono); color: var(--primary);">${state.googleRedirectUri || window.location.origin}</code></div>
-              <p style="color: var(--text-dim); font-size: 0.75rem; margin-top: 0.25rem;">
-                * Make sure the Redirect URI above matches exactly what is configured in your Google Cloud Console.
-              </p>
+
+          ${!isConfigured ? `
+            <div style="display:flex;gap:0.5rem;margin-top:1.25rem;">
+              <button class="btn btn-primary" id="save-google-client-id-btn" style="flex:1;">
+                Save Config
+              </button>
+              <input type="file" id="google-credentials-file" accept=".json" style="display:none;">
+              <button class="btn btn-outline" id="upload-google-json-btn" style="display:inline-flex;align-items:center;gap:4px;">
+                <i data-lucide="upload-cloud"></i> Upload JSON
+              </button>
             </div>
-          ` : `
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-              <div class="input-group" style="margin-bottom: 0;">
-                <label>Google Client ID</label>
-                <input type="text" id="google-client-id-input" placeholder="Enter Client ID (xxx.apps.googleusercontent.com)">
-              </div>
-              <div class="input-group" style="margin-bottom: 0;">
-                <label>OAuth Redirect URI</label>
-                <input type="text" id="google-redirect-uri-input" placeholder="e.g. http://localhost:8900/" value="${state.googleRedirectUri || window.location.origin + '/'}">
-              </div>
-              <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                <button class="btn btn-primary" id="save-google-client-id-btn" style="flex: 1; font-size: 0.85rem;">
-                  Save Config
-                </button>
-                <input type="file" id="google-credentials-file" accept=".json" style="display: none;">
-                <button class="btn btn-outline" id="upload-google-json-btn" style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; padding: 0.5rem 0.75rem;">
-                  <i data-lucide="upload-cloud"></i> Upload JSON
-                </button>
-              </div>
-            </div>
-          `}
+          ` : ''}
         </div>
       </div>
-    </main>
+    </div>
   `
 }
 
@@ -2194,78 +2266,73 @@ function GoogleAnalyticsManagerView() {
   });
 
   return `
-    <main class="container">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-        <div>
-          <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">GA Properties</h1>
-          <p style="color: var(--text-dim);">Manage multiple Google Analytics accounts and properties in one place.</p>
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 class="page-title">GA Properties</h1>
+          <p class="page-subtitle">Manage multiple Google Analytics accounts and properties in one place</p>
         </div>
-        <div style="display: flex; gap: 0.75rem;">
+        <div class="page-actions">
           ${isConfigured ? `
-            <button class="btn btn-outline" id="import-ga-properties-btn" style="border-color: #4285f4; color: #4285f4;">
-              <i data-lucide="refresh-cw"></i> Import from Google Account
+            <button class="btn btn-outline" id="import-ga-properties-btn" style="border-color:var(--ga-blue);color:var(--ga-blue);">
+              <i data-lucide="refresh-cw"></i> Import Properties
             </button>
           ` : `
-            <button class="btn btn-outline" onclick="state.activeView = 'settings'; render();" style="border-color: var(--warning); color: var(--warning); display: inline-flex; align-items: center; gap: 0.25rem;">
+            <button class="btn btn-outline" onclick="state.activeView = 'settings'; render();" style="border-color:var(--warning);color:var(--warning);">
               <i data-lucide="settings"></i> Configure Google API
             </button>
           `}
           <button class="btn btn-primary" id="add-ga-property-btn">
-            <i data-lucide="plus-circle"></i> Add Property
+            <i data-lucide="plus"></i> Add Property
           </button>
         </div>
       </div>
 
-      <div class="toolbar" style="margin-bottom: 1.5rem;">
-        <div class="search-box">
-          <i data-lucide="search"></i>
-          <input type="text" id="ga-property-search" placeholder="Search properties..." value="${searchQuery}">
+      <div class="toolbar" style="margin-bottom:1rem;">
+        <div class="search-wrap">
+          <i data-lucide="search" class="search-icon"></i>
+          <input type="text" class="search-input" id="ga-property-search" placeholder="Search properties (name, ID)..." value="${searchQuery}">
         </div>
       </div>
 
       ${state.gaProperties.length === 0 ? `
-        <div class="glass-panel" style="padding: 4rem; text-align: center;">
-          <i data-lucide="bar-chart-3" style="width: 48px; height: 48px; color: var(--text-dim); margin-bottom: 1.5rem;"></i>
+        <div class="empty-state">
+          <i data-lucide="bar-chart-3" class="empty-state-icon"></i>
           <h3>No Google Analytics Properties</h3>
-          <p style="color: var(--text-dim); margin-top: 0.5rem;">
-            Add properties manually or configure Google API Client ID in <a href="#" onclick="state.activeView = 'settings'; render(); return false;" style="color: var(--primary); text-decoration: underline;">Settings</a> to import them automatically.
+          <p>
+            Add properties manually or configure Google API Client ID in <a href="#" onclick="state.activeView = 'settings'; render(); return false;" style="color:var(--accent);text-decoration:underline;">Settings</a> to import them automatically.
           </p>
         </div>
       ` : `
-        <div class="repo-list">
+        <div class="list-stack repo-list">
           ${filteredProperties.length === 0 ? `
-            <div style="padding: 3rem; text-align: center; color: var(--text-dim);">No properties match your filters.</div>
+            <div class="empty-state" style="padding:2rem;"><p>No properties match your filters.</p></div>
           ` : filteredProperties.map(prop => {
             const isCurrentlyActive = state.gaId === prop.measurementId;
             return `
-              <div class="repo-list-item glass-panel" style="padding: 1.25rem 2rem; border-color: ${isCurrentlyActive ? 'var(--primary)' : 'var(--glass-border)'}; box-shadow: ${isCurrentlyActive ? '0 0 10px var(--primary-glow)' : 'none'};">
-                <div style="display: flex; align-items: center; gap: 1.5rem; flex: 1; flex-wrap: wrap;">
-                  <span class="domain-status ${isCurrentlyActive ? 'domain-active' : 'domain-pending'}" style="margin-left: 0.5rem;"></span>
-                  <div style="flex: 1; min-width: 200px;">
-                    <div style="font-weight: 600; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
-                      ${prop.name}
-                      ${isCurrentlyActive ? '<span style="font-size: 0.65rem; background: var(--primary-glow); color: var(--primary); border: 1px solid var(--primary-glow); padding: 1px 6px; border-radius: 4px; font-weight: 600; letter-spacing: 0.05em;">ACTIVE</span>' : ''}
-                    </div>
-                    <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                      <span>Property ID:</span>
-                      <span style="color: var(--text-muted); font-weight: 500;">${prop.propertyId || 'N/A'}</span>
-                      <span style="opacity: 0.5;">•</span>
-                      <span>Measurement ID:</span>
-                      <code style="color: var(--primary); font-family: var(--font-mono); font-size: 0.75rem;">${prop.measurementId}</code>
-                    </div>
+              <div class="list-item" style="border-color: ${isCurrentlyActive ? 'var(--accent)' : ''};">
+                <div class="status-dot ${isCurrentlyActive ? 'active' : 'pending'}" style="margin-left:0.25rem;"></div>
+                <div class="list-item-body">
+                  <div style="font-weight:600;font-size:0.95rem;color:var(--text-primary);display:flex;align-items:center;gap:0.5rem;">
+                    ${prop.name}
+                    ${isCurrentlyActive ? '<span class="badge badge-success badge-pill" style="font-size:0.65rem;">ACTIVE</span>' : ''}
                   </div>
-                  
-                  <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
-                    <button class="btn ${isCurrentlyActive ? 'btn-outline' : 'btn-primary'} activate-ga-property" data-id="${prop.id}" data-measurement-id="${prop.measurementId}" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; height: 36px; min-width: 100px;">
-                      ${isCurrentlyActive ? 'Deactivate' : 'Set Active'}
-                    </button>
-                    <button class="btn btn-outline copy-ga-code" data-measurement-id="${prop.measurementId}" title="Copy Tracking Script" style="padding: 0; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
-                      <i data-lucide="copy" style="width: 16px; height: 16px;"></i>
-                    </button>
-                    <button class="btn-icon danger remove-ga-property" data-id="${prop.id}" title="Remove Property" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; margin: 0;">
-                      <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-                    </button>
+                  <div class="list-item-meta">
+                    <span class="list-item-meta-unit">Property ID: <strong>${prop.propertyId || 'N/A'}</strong></span>
+                    <span class="list-item-meta-unit">Measurement ID: <code style="color:var(--accent-light);font-family:var(--font-mono);font-size:0.75rem;">${prop.measurementId}</code></span>
                   </div>
+                </div>
+                
+                <div class="list-item-actions">
+                  <button class="btn ${isCurrentlyActive ? 'btn-outline' : 'btn-primary'} btn-sm activate-ga-property" data-id="${prop.id}" data-measurement-id="${prop.measurementId}" style="min-width:100px;">
+                    ${isCurrentlyActive ? 'Deactivate' : 'Set Active'}
+                  </button>
+                  <button class="btn-icon copy-ga-code" data-measurement-id="${prop.measurementId}" title="Copy Tracking Script">
+                    <i data-lucide="copy"></i>
+                  </button>
+                  <button class="btn-icon danger remove-ga-property" data-id="${prop.id}" title="Remove Property">
+                    <i data-lucide="trash-2"></i>
+                  </button>
                 </div>
               </div>
             `
@@ -2275,12 +2342,12 @@ function GoogleAnalyticsManagerView() {
 
       <!-- Add GA Property Modal -->
       <div class="modal-overlay" id="ga-modal-overlay">
-        <div class="modal glass-panel">
-          <button class="modal-close" id="close-ga-modal-btn">
-            <i data-lucide="x"></i>
-          </button>
-          <h2 style="margin-bottom: 0.5rem;">Add GA Property</h2>
-          <p style="color: var(--text-dim); font-size: 0.875rem; margin-bottom: 2rem;">Add a Google Analytics 4 (GA4) property to manage.</p>
+        <div class="modal">
+          <button class="modal-close" id="close-ga-modal-btn"><i data-lucide="x"></i></button>
+          <div class="modal-header">
+            <div class="modal-title">Add GA Property</div>
+            <div class="modal-subtitle">Add a Google Analytics 4 (GA4) property to manage.</div>
+          </div>
           
           <div class="input-group">
             <label>Property Name</label>
@@ -2292,73 +2359,96 @@ function GoogleAnalyticsManagerView() {
             <input type="text" id="ga-prop-id" placeholder="123456789">
           </div>
           
-          <div class="input-group">
+          <div class="input-group" style="margin-bottom:1.5rem;">
             <label>Measurement ID (GA4)</label>
             <input type="text" id="ga-prop-measurement-id" placeholder="G-XXXXXXXXXX">
           </div>
 
-          <button class="btn btn-primary" id="save-ga-property-btn" style="width: 100%; margin-top: 1rem;">
-            Save Property
+          <button class="btn btn-primary" id="save-ga-property-btn" style="width:100%;">
+            <i data-lucide="save"></i> Save Property
           </button>
         </div>
       </div>
-    </main>
+    </div>
   `
 }
 
 function Sidebar() {
+  const repoCount = state.repos.length
   return `
     <aside class="sidebar">
-      <div style="margin: 1.5rem 0 0.5rem 1rem; font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Github</div>
-      
-      <div class="nav-item ${state.activeView === 'github' ? 'active' : ''}" data-view="github">
-        <i data-lucide="github"></i> GitHub Repos
-      </div>
-      <div class="nav-item ${state.activeView === 'commits' ? 'active' : ''}" data-view="commits">
-        <i data-lucide="history"></i> Recent Commits
-      </div>
-      <div class="nav-item ${state.activeView === 'trending' ? 'active' : ''}" data-view="trending">
-        <i data-lucide="trending-up"></i> Trending
-      </div>
-      
-      <div style="margin: 1.5rem 0 0.5rem 1rem; font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Cloudflare</div>
-      
-      <div class="nav-item ${state.activeView === 'cf-domains' ? 'active' : ''}" data-view="cf-domains">
-        <i data-lucide="globe"></i> Manage Domains
-      </div>
-      <div class="nav-item ${state.activeView === 'cf-accounts' ? 'active' : ''}" data-view="cf-accounts">
-        <i data-lucide="users"></i> Manage Accounts
+      <div class="nav-group">
+        <div class="nav-group-label"><i data-lucide="github" style="width:11px;height:11px;"></i> GitHub</div>
+        <div class="nav-item ${state.activeView === 'github' ? 'active' : ''}" data-view="github">
+          <i data-lucide="git-fork"></i> Repositories
+          ${repoCount > 0 ? `<span class="nav-badge">${repoCount}</span>` : ''}
+        </div>
+        <div class="nav-item ${state.activeView === 'commits' ? 'active' : ''}" data-view="commits">
+          <i data-lucide="history"></i> Recent Commits
+        </div>
+        <div class="nav-item ${state.activeView === 'trending' ? 'active' : ''}" data-view="trending">
+          <i data-lucide="trending-up"></i> Trending
+        </div>
       </div>
 
-      <div style="margin: 1.5rem 0 0.5rem 1rem; font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Google Analytics</div>
-      <div class="nav-item ${state.activeView === 'ga-properties' ? 'active' : ''}" data-view="ga-properties">
-        <i data-lucide="bar-chart-2"></i> GA Properties
+      <div class="nav-group">
+        <div class="nav-group-label" style="color:var(--cf-orange);opacity:0.8;">Cloudflare</div>
+        <div class="nav-item ${state.activeView === 'cf-domains' ? 'active' : ''}" data-view="cf-domains">
+          <i data-lucide="globe"></i> Manage Domains
+        </div>
+        <div class="nav-item ${state.activeView === 'cf-accounts' ? 'active' : ''}" data-view="cf-accounts">
+          <i data-lucide="shield"></i> CF Accounts
+        </div>
       </div>
 
-      <div style="margin: 1.5rem 0 0.5rem 1rem; font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Management</div>
-      <div class="nav-item ${state.activeView === 'kanban' ? 'active' : ''}" data-view="kanban">
-        <i data-lucide="kanban"></i> Kanban Board
+      <div class="nav-group">
+        <div class="nav-group-label" style="color:var(--ga-blue);opacity:0.8;">Analytics</div>
+        <div class="nav-item ${state.activeView === 'ga-properties' ? 'active' : ''}" data-view="ga-properties">
+          <i data-lucide="bar-chart-2"></i> GA Properties
+        </div>
       </div>
 
-      <div style="margin: 1.5rem 0 0.5rem 1rem; font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">SEO</div>
-      <div class="nav-item ${state.activeView === 'seo-indexnow' ? 'active' : ''}" data-view="seo-indexnow">
-        <i data-lucide="zap"></i> IndexNow Submit
-      </div>
-      <div class="nav-item ${state.activeView === 'seo-domainchecker' ? 'active' : ''}" data-view="seo-domainchecker">
-        <i data-lucide="search"></i> Domain Checker
-      </div>
-
-      <div style="margin: 1.5rem 0 0.5rem 1rem; font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">System</div>
-      <div class="nav-item ${state.activeView === 'settings' ? 'active' : ''}" data-view="settings">
-        <i data-lucide="settings"></i> Settings
+      <div class="nav-group">
+        <div class="nav-group-label">Management</div>
+        <div class="nav-item ${state.activeView === 'kanban' ? 'active' : ''}" data-view="kanban">
+          <i data-lucide="kanban"></i> Kanban Board
+        </div>
       </div>
 
-      <div style="margin-top: auto; padding: 1rem; border-top: 1px solid var(--border-subtle);">
-        <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Resources</div>
-        <a href="https://dash.cloudflare.com" target="_blank" class="nav-item" style="padding: 0.5rem 0.75rem; font-size: 0.85rem;">
-          <i data-lucide="external-link" style="width: 14px;"></i> CF Dashboard
+      <div class="nav-group">
+        <div class="nav-group-label">SEO</div>
+        <div class="nav-item ${state.activeView === 'seo-indexnow' ? 'active' : ''}" data-view="seo-indexnow">
+          <i data-lucide="zap"></i> IndexNow
+        </div>
+        <div class="nav-item ${state.activeView === 'seo-domainchecker' ? 'active' : ''}" data-view="seo-domainchecker">
+          <i data-lucide="search"></i> Domain Checker
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">System</div>
+        <div class="nav-item ${state.activeView === 'settings' ? 'active' : ''}" data-view="settings">
+          <i data-lucide="settings"></i> Settings
+        </div>
+        <a href="https://dash.cloudflare.com" target="_blank" class="nav-item">
+          <i data-lucide="external-link"></i> CF Dashboard
         </a>
       </div>
+
+      ${state.user ? `
+        <div class="sidebar-footer">
+          <div class="sidebar-user-card">
+            <img src="${state.user.avatar_url}" class="sidebar-avatar" alt="${state.user.login}">
+            <div class="sidebar-user-info">
+              <div class="sidebar-username">${state.user.login}</div>
+              <div class="sidebar-userrole">${state.user.bio || 'Developer'}</div>
+            </div>
+          </div>
+          <div class="nav-item" id="logout-btn" style="color:var(--error);justify-content:center;">
+            <i data-lucide="log-out"></i> Sign Out
+          </div>
+        </div>
+      ` : ''}
     </aside>
   `
 }
@@ -2404,18 +2494,21 @@ function render() {
   if (state.loading) {
     app.innerHTML = `
       ${Header()}
-      <div class="loader"></div>
+      <div class="loading-center">
+        <div class="loader" style="margin:0;"></div>
+        <span>Loading your dashboard...</span>
+      </div>
     `
     lucide.createIcons()
     return
   }
 
   if (!state.token) {
-    app.innerHTML = `${Header()}${AuthScreen()}`
+    app.innerHTML = `${AuthScreen()}`
   } else if (state.user) {
     app.innerHTML = `
       ${Header()}
-      <div class="app-layout">
+      <div class="app-shell">
         ${Sidebar()}
         <div class="main-content">
           ${(() => {
