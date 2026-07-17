@@ -2595,8 +2595,8 @@ function bindRepoItemEvents() {
     btn.onclick = (e) => {
       e.stopPropagation()
       const { owner, name } = btn.dataset
-      const item = btn.closest('.repo-list-item')
-      const nameAnchor = item.querySelector('.repo-name')
+      const item = btn.closest('.list-item')
+      const nameAnchor = item.querySelector('.list-item-title')
 
       // Create input element
       const input = document.createElement('input')
