@@ -28,6 +28,9 @@ args = [
     
     # asyncio loop dependencies
     '--hidden-import=anyio._backends._asyncio',
+
+    # Icon for the EXE (Windows taskbar + desktop shortcut)
+    '--icon=assets/app_icon.ico',
 ]
 
 if __name__ == '__main__':
