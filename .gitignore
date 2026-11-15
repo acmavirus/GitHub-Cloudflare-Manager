@@ -35,6 +35,7 @@ build/
 out/
 bin/
 obj/
+src-tauri/target/
 
 # Python Cache & Virtual Environments
 __pycache__/

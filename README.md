@@ -1,131 +1,96 @@
-# GITCORE - Premium Dev & Site Management Hub 🚀
+# GITCORE v2.0 — Premium Dev & Site Management Hub 🚀
 
-**GITCORE** is a high-performance, aesthetically pleasing "Cyber Premium" web application designed for developers and web administrators. It aggregates your daily operations—managing GitHub repositories, Cloudflare DNS configurations, Google Analytics properties, indexing web pages via IndexNow, auditing site URLs, and tracking tasks—into a single unified, glassmorphic desktop-like dashboard.
+**GITCORE v2.0** là thế hệ ứng dụng máy tính (Desktop App) thế hệ mới được tái thiết kế toàn diện trên nền tảng **Tauri 2.0 (Rust) + React 19 + TypeScript + Tailwind CSS**. 
+
+Ứng dụng gom toàn bộ tác vụ vận hành website & DevOps hàng ngày của bạn vào một giao diện Cyberpunk Glassmorphism mượt mà: quản lý GitHub repositories, cấu hình Cloudflare DNS đa tài khoản, đo lường Google Analytics 4, lập chỉ mục tìm kiếm siêu tốc IndexNow, kiểm toán sitemap domain và quản lý tiến độ Kanban.
 
 ---
 
-## ✨ Features
+## ✨ Điểm nổi bật phiên bản v2.0
 
-### 🐙 GitHub Repository Manager
-- 🔐 **Secure Login**: Connect securely using your GitHub Personal Access Token (PAT).
-- 📊 **Real-time Metrics**: View commits count, branches, stars, and forks at a glance.
-- ⚡ **Direct Operations**:
-  - **Inline Rename**: Edit repository names directly inside the listing.
-  - **Clone Command**: Copy `git clone` command to clipboard with a single click.
-  - **Bulk Deletion**: Select multiple repositories and trash them in one bulk operation.
-- 🔍 **Advanced Filters**: Filter repositories by visibility (Public/Private), Type (Source/Fork), or Owner (User vs Organizations).
-- 📈 **Explore**: View global public commits and trending repositories directly inside the application.
-
-### ☁️ Cloudflare Domain & DNS Manager
-- 🔑 **Multi-Account Integration**: Add multiple Cloudflare credentials using Global API Keys.
-- 🌐 **Unified Domains View**: Access all zones and domain records grouped by organization or API key.
-- 🛠️ **DNS Records Control**: Full support to view and modify DNS records (A, AAAA, CNAME, TXT, MX, NS) with proxy status toggles.
-- 🔄 **Bulk IP Replacement**: Find and replace IP addresses for A records across multiple filtered domains in a single click (ideal for server migration).
-
-### 📊 Google Analytics 4 (GA4) Manager
-- 🔑 **Google OAuth Integration**: Connect your Google Account to fetch and sync properties automatically.
-- 📋 **Horizontal List Layout**: View and search GA4 properties via a clean horizontal list including active status trackers, Property IDs, and Measurement IDs.
-- 🎯 **Active Script Copying**: One-click to copy Google Analytics tracking code (`gtag.js`).
-- 🗑️ **Dual Deletion Flow**:
-  - **Remove from List**: Deletes the local tracking entry in your manager dashboard.
-  - **Delete from Google Analytics**: Soft-deletes the actual property on Google's servers via the Google Admin API (requires OAuth authentication with `analytics.edit` scope).
-
-### 🚀 IndexNow Submitter
-- ⚡ **Fast Search Engine Indexing**: Submit URLs directly to IndexNow-supported search engines (like Bing, Yandex, Seznam).
-- 🔑 **Key Management**: Save and verify your unique key files on your domains.
-- 📝 **Bulk or Individual Submission**: Submit multiple URLs in a single batch, or select individual mode to track exactly which URLs succeeded or failed.
-- 📜 **History Log**: Keeps a submission log with status codes and request summaries in browser cache.
-
-### 🔍 Domain Auditor & URL Checker
-- 🌐 **XML Sitemap Import**: Automatically parse and extract URLs from site sitemaps (detects through `robots.txt` paths).
-- ⚙️ **Performance & Audit**: Perform multi-threaded checks on URLs to measure Response Times, HTTP Status Codes, File Size, and SEO Page Titles.
-- 📥 **Export to CSV**: Export auditing reports to a standard CSV spreadsheet for diagnostics.
-
-### 📋 Kanban Task Manager
-- 🗂️ **Visual Boards**: Organize development work using standard Kanban columns (To Do, In Progress, Review, Done).
-- 🔗 **Repo Linking**: Assign tasks directly to specific GitHub repositories.
-- 🏷️ **Priority and Filters**: Set Priority Levels (Low, Medium, High) and filter tasks dynamically by project or level.
+- ⚡ **Siêu nhẹ & Tiết kiệm tài nguyên**: Kích thước file cài đặt chỉ **~10-15MB**, mức tiêu hao RAM chỉ **~35-50MB** (thay vì 100MB+ và 200MB RAM của kiến trúc Python PyWebView cũ).
+- 🛡️ **Bypass CORS tự nhiên (Direct Socket)**: Sử dụng `@tauri-apps/plugin-http` của Tauri 2.0 để gọi trực tiếp tới Cloudflare API, GitHub API, IndexNow và các máy chủ bên ngoài từ tầng Rust Native — **không cần proxy trung gian, không bị chặn CORS**.
+- 🧩 **Kiến trúc Feature-Driven**: Toàn bộ mã nguồn monolithic 4,600 dòng đã được phân tách thành các module React + TypeScript độc lập, kiểu dữ liệu chặt chẽ và an toàn tuyệt đối.
+- 💾 **Lưu trữ cấu hình bền vững**: Sử dụng `@tauri-apps/plugin-store` lưu trực tiếp vào hệ thống file `AppData` của máy, không lo mất dữ liệu khi xóa cache trình duyệt.
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Core**: Vanilla JavaScript (ES6+), HTML5 Semantic layout
-- **Styling**: Custom Vanilla CSS (Modern CSS variables, Flexbox/Grid, perpetual glassmorphic blur filters, custom scrollbars)
-- **Icons**: Lucide Icons
-- **Build Tool**: Vite (Ultra-fast HMR)
-- **Environment**: Docker-Ready (Docker Compose)
+- **Desktop Runtime**: [Tauri 2.0](https://tauri.app/) (Rust 1.90+)
+- **Frontend Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Vite 7](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) (Custom Cyber Dark / Light Glass Design System)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **State & Caching**: [Zustand](https://zustand-demo.pmnd.rs/) + [TanStack React Query v5](https://tanstack.com/query/latest)
+- **Native Plugins**:
+  - `@tauri-apps/plugin-http` (CORS-free HTTP requests)
+  - `@tauri-apps/plugin-store` (Persistent Key-Value Storage)
+  - `@tauri-apps/plugin-clipboard-manager` (Clipboard integration)
+  - `@tauri-apps/plugin-opener` (Default system browser launcher)
+  - `@tauri-apps/plugin-notification` (System desktop notifications)
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Hướng dẫn phát triển & Khởi chạy
 
-### Prerequisites
-1. Docker Desktop (Recommended container setup) OR Node.js (v18+)
-2. API Access Tokens (see instructions below for details)
+### Yêu cầu hệ thống
+1. **Node.js**: v18+ (khuyên dùng v20 hoặc v22)
+2. **Rust & Cargo**: v1.78+ ([Tải Rustup](https://rustup.rs/))
+3. **Microsoft C++ Build Tools** (trên Windows)
 
-### Installation (Docker - Recommended)
+### 1. Cài đặt dependencies
+```bash
+npm install
+```
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/app-github.git
-   cd app-github
-   ```
+### 2. Chạy ứng dụng Desktop ở chế độ Development
+Lệnh này sẽ khởi động Vite dev server và mở ngay cửa sổ ứng dụng Desktop:
+```bash
+npm run tauri dev
+```
 
-2. **Spin up container**
-   ```bash
-   docker-compose down ; docker-compose up -d --build
-   ```
+*(Hoặc nếu chỉ muốn chạy giao diện trên trình duyệt web: `npm run dev`)*
 
-3. Open your browser and navigate to: `http://localhost:8900`
-
-### Installation (Node.js Local)
-
-1. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-2. **Run dev server**
-   ```bash
-   npm run dev
-   ```
-
-3. The application will serve at `http://localhost:5173` (or the default Vite development port).
+### 3. Đóng gói ứng dụng Desktop (.exe / .msi)
+Lệnh này sẽ biên dịch mã nguồn Rust và đóng gói thành file cài đặt độc lập:
+```bash
+npm run tauri build
+```
+File cài đặt hoàn thiện sẽ nằm tại thư mục: `src-tauri/target/release/bundle/`.
 
 ---
 
-## 🔑 API Configuration & Setup
+## 📦 Danh sách Module chức năng
 
-### 1. GitHub Personal Access Token (PAT)
-1. Go to your **GitHub Settings** -> **Developer settings** -> **Personal access tokens** -> **Tokens (classic)**.
-2. Click **Generate new token (classic)**.
-3. Configure scopes:
-   - Check `repo` (Full control of private and public repositories).
-   - Check `user` (Read/write profile metadata).
-4. Generate the token, copy it, and paste it into GITCORE's Login Screen.
+1. **GitHub Repository Manager**:
+   - Xác thực an toàn qua Personal Access Token (PAT).
+   - Đổi tên trực tiếp (Inline Rename), sao chép lệnh `git clone` 1-click.
+   - Xóa đơn lẻ và **Xóa hàng loạt (Bulk Delete)** an toàn với hộp thoại xác nhận.
+   - Khám phá bảng xếp hạng **GitHub Trending** (Daily / Weekly / Monthly).
 
-### 2. Cloudflare API Key
-1. Go to your Cloudflare Dashboard -> My Profile -> **API Tokens**.
-2. Locate the **Global API Key** row and click **View**.
-3. In GITCORE's Cloudflare view, enter your **Cloudflare Account Email** and the **Global API Key**.
+2. **Cloudflare Domains & DNS Manager**:
+   - Quản lý đa tài khoản Cloudflare qua Global API Key.
+   - Quản lý Zones và danh sách bản ghi DNS (A, AAAA, CNAME, TXT, MX, NS...).
+   - **Tính năng độc quyền Bulk IP Replacement**: Tự động tìm và thay thế địa chỉ IP cũ sang IP mới cho toàn bộ tên miền khi chuyển đổi máy chủ.
 
-### 3. Google API & OAuth Configuration (for GA4 Property Manager)
-To enable automated importing and property deletion, configure OAuth credentials:
-1. Go to the **Google Cloud Console** and select/create a project.
-2. Navigate to **APIs & Services** -> **Library** and enable the **Google Analytics Admin API**.
-3. Navigate to **OAuth consent screen**:
-   - Choose User Type (External/Internal) and fill in application details.
-   - Under Scopes, add:
-     - `https://www.googleapis.com/auth/analytics.readonly`
-     - `https://www.googleapis.com/auth/analytics.edit` (Required for remote deletion/trashing).
-4. Navigate to **Credentials** -> **Create Credentials** -> **OAuth client ID**:
-   - Select **Web application** as application type.
-   - Add **Authorized JavaScript origins** (e.g. `http://localhost:8900` if using Docker, or `http://localhost:5173` if local).
-   - Add **Authorized redirect URIs** (e.g., `http://localhost:8900/callback` or your custom domain setup).
-5. Click Save, and download the client credentials JSON file.
-6. In GITCORE's GA Properties view, click **Configure Google API** and upload this JSON file (or copy the Client ID and Redirect URI manually). Click **Save Config**.
+3. **Google Analytics 4**:
+   - Quản lý danh sách Properties và Measurement ID.
+   - 1-Click sao chép đoạn mã nhúng `gtag.js`.
 
----
+4. **IndexNow Submitter**:
+   - Gửi yêu cầu lập chỉ mục tức thì tới Bing, Yandex, Seznam.
+   - Kiểm tra và xác thực file key trên hosting/tên miền.
+   - Lưu trữ lịch sử submit.
 
-Built with ❤️ by AcmaTvirus
+5. **Domain Auditor & URL Checker**:
+   - Tự động trích xuất URLs từ file XML Sitemap.
+   - Kiểm tra mã trạng thái HTTP, độ trễ phản hồi (ms), dung lượng trang và thẻ tiêu đề SEO.
+   - Xuất toàn bộ báo cáo kiểm toán ra định dạng CSV.
+
+6. **Kanban Tasks**:
+   - Bảng quản lý tiến độ 4 cột (To Do, In Progress, Review, Done).
+   - Gắn công việc với từng repository cụ thể và thiết lập độ ưu tiên.
+
+7. **System Settings**:
+   - Chuyển đổi linh hoạt giao diện Cyber Dark / Light.
+   - Kiểm tra trạng thái runtime và khôi phục cài đặt gốc an toàn.

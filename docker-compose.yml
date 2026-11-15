@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: github-cf-manager
     ports:
-      - "8900:8900"
+      - "5173:5173"
     volumes:
       - .:/app
       - /app/node_modules
