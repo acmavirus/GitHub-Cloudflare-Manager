@@ -10,7 +10,6 @@ import { ConfirmModal } from './components/common/ConfirmModal'
 import { GitHubAuth } from './features/github/GitHubAuth'
 import { GitHubManager } from './features/github/GitHubManager'
 import { CloudflareDomains } from './features/cloudflare/CloudflareDomains'
-import { CloudflareAccounts } from './features/cloudflare/CloudflareAccounts'
 import { GoogleAnalyticsManager } from './features/analytics/GoogleAnalytics'
 import { GoogleSearchConsole } from './features/gsc/GoogleSearchConsole'
 import { BingWebmaster } from './features/bing/BingWebmaster'
@@ -41,7 +40,7 @@ export const AppContent: React.FC = () => {
       <div className="w-screen h-screen flex items-center justify-center bg-[var(--bg-void)] text-xs text-[var(--text-muted)] font-mono">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
-          <span>Khởi động GITCORE Webmaster Engine...</span>
+          <span>Đang tải dữ liệu...</span>
         </div>
       </div>
     )
@@ -55,8 +54,6 @@ export const AppContent: React.FC = () => {
         return <KanbanBoard />
       case 'cf-domains':
         return <CloudflareDomains />
-      case 'cf-accounts':
-        return <CloudflareAccounts />
       case 'gsc':
         return <GoogleSearchConsole />
       case 'bing':

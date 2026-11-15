@@ -3,7 +3,6 @@ import {
   FolderGit2,
   KanbanSquare,
   Globe2,
-  KeyRound,
   Search,
   Compass,
   Award,
@@ -30,6 +29,8 @@ export const Sidebar: React.FC = () => {
   const { activeView, setActiveView, cfAccounts, kanbanTasks, gscProperties, bingAccounts, yandexAccounts } =
     useAppStore()
 
+  const totalConnectedAccounts = cfAccounts.length + bingAccounts.length + yandexAccounts.length
+
   const sections: NavSection[] = [
     {
       title: 'Quản lý dự án',
@@ -54,12 +55,6 @@ export const Sidebar: React.FC = () => {
           id: 'cf-domains',
           label: 'Cloudflare DNS',
           icon: Globe2,
-        },
-        {
-          id: 'cf-accounts',
-          label: 'Tài khoản Cloudflare',
-          icon: KeyRound,
-          badge: cfAccounts.length > 0 ? cfAccounts.length : undefined,
         },
       ],
     },
@@ -106,8 +101,9 @@ export const Sidebar: React.FC = () => {
         },
         {
           id: 'settings',
-          label: 'Cài đặt',
+          label: 'Cài đặt & Tài khoản',
           icon: Settings,
+          badge: totalConnectedAccounts > 0 ? totalConnectedAccounts : undefined,
         },
       ],
     },

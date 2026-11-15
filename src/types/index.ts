@@ -3,7 +3,6 @@ export type ActiveView =
   | 'github'
   | 'kanban'
   | 'cf-domains'
-  | 'cf-accounts'
   | 'gsc'
   | 'bing'
   | 'yandex'

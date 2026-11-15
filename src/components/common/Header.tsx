@@ -15,8 +15,6 @@ export const Header: React.FC = () => {
         return { title: 'Bảng công việc Kanban', desc: 'Theo dõi tiến độ phát triển dự án' }
       case 'cf-domains':
         return { title: 'Cloudflare Domains & DNS', desc: 'Quản lý zones và bản ghi DNS' }
-      case 'cf-accounts':
-        return { title: 'Tài khoản Cloudflare', desc: 'Danh sách kết nối API Cloudflare' }
       case 'gsc':
         return { title: 'Google Search Console', desc: 'Hiệu suất tìm kiếm, lượt click và thứ hạng từ khóa' }
       case 'bing':
@@ -24,13 +22,13 @@ export const Header: React.FC = () => {
       case 'yandex':
         return { title: 'Yandex Webmaster', desc: 'Theo dõi chất lượng website và chỉ mục Yandex' }
       case 'indexing-hub':
-        return { title: 'Lập chỉ mục nhanh (Fast Indexing)', desc: 'Gửi URL tức thì tới công cụ tìm kiếm' }
+        return { title: 'Lập chỉ mục nhanh', desc: 'Gửi URL tức thì tới công cụ tìm kiếm' }
       case 'ga-manager':
         return { title: 'Google Analytics 4', desc: 'Quản lý mã đo lường và theo dõi lưu lượng' }
       case 'auditor':
-        return { title: 'Kiểm toán Tên miền (Domain Auditor)', desc: 'Kiểm tra trạng thái HTTP và sitemap website' }
+        return { title: 'Kiểm toán Tên miền', desc: 'Kiểm tra trạng thái HTTP và sitemap website' }
       case 'settings':
-        return { title: 'Cài đặt hệ thống', desc: 'Tùy chọn giao diện và dữ liệu ứng dụng' }
+        return { title: 'Cài đặt & Tài khoản', desc: 'Cấu hình tài khoản Cloudflare, Google, Bing, Yandex và tùy chọn hệ thống' }
       default:
         return { title: 'Bảng điều khiển', desc: 'Trung tâm quản trị website & DevOps' }
     }

@@ -17,9 +17,10 @@ import {
 import { useAppStore } from '../../lib/useAppStore'
 import { cfApi } from './api'
 import { CloudflareZone, CloudflareDnsRecord, CloudflareAccount } from '../../types'
+import { EmptyState } from '../../components/ui'
 
 export const CloudflareDomains: React.FC = () => {
-  const { cfAccounts, addToast, showConfirm } = useAppStore()
+  const { cfAccounts, addToast, showConfirm, setActiveView } = useAppStore()
 
   const [zones, setZones] = useState<CloudflareZone[]>([])
   const [loadingZones, setLoadingZones] = useState(false)
@@ -266,9 +267,19 @@ export const CloudflareDomains: React.FC = () => {
                 <Loader2 size={20} className="animate-spin text-orange-400" />
                 <span>Đang tải danh sách zones...</span>
               </div>
+            ) : cfAccounts.length === 0 ? (
+              <div className="py-8 px-4">
+                <EmptyState
+                  icon={Globe}
+                  title="Chưa kết nối Cloudflare"
+                  description="Bạn chưa cấu hình tài khoản Cloudflare nào trong hệ thống."
+                  actionLabel="Mở Cài đặt & Tài khoản"
+                  onAction={() => setActiveView('settings')}
+                />
+              </div>
             ) : filteredZones.length === 0 ? (
               <div className="py-12 text-center text-xs text-[var(--text-muted)]">
-                Chưa có domain nào hoặc không tìm thấy domain phù hợp.
+                Chưa có tên miền nào hoặc không tìm thấy kết quả phù hợp.
               </div>
             ) : (
               filteredZones.map((z) => {
