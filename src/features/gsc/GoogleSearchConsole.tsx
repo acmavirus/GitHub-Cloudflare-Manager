@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import {
   Search,
   Plus,
-  Trash2,
   RotateCw,
   TrendingUp,
   MousePointerClick,
@@ -10,21 +9,17 @@ import {
   Percent,
   BarChart2,
   FileJson,
-  KeyRound,
   ExternalLink,
-  Loader2,
   Globe,
-  ChevronRight,
-  ArrowUpRight,
   ShieldCheck,
 } from 'lucide-react'
 import { useAppStore } from '../../lib/useAppStore'
 import { gscApi } from './api'
 import { GSCAccount, GSCProperty } from '../../types'
+import { Button, Input, Textarea, Modal, StatCard, Badge, EmptyState } from '../../components/ui'
 
 export const GoogleSearchConsole: React.FC = () => {
-  const { gscAccounts, addGscAccount, removeGscAccount, gscProperties, upsertGscProperty, addToast, showConfirm } =
-    useAppStore()
+  const { gscAccounts, addGscAccount, gscProperties, upsertGscProperty, addToast } = useAppStore()
 
   // Account modal
   const [showAccountModal, setShowAccountModal] = useState(false)
@@ -45,18 +40,14 @@ export const GoogleSearchConsole: React.FC = () => {
     setConnecting(true)
 
     try {
-      let clientEmail = ''
-      let privateKey = ''
-
       if (accType === 'service_account') {
         const parsed = JSON.parse(jsonKeyText.trim())
-        clientEmail = parsed.client_email
-        privateKey = parsed.private_key
+        const clientEmail = parsed.client_email
+        const privateKey = parsed.private_key
         if (!clientEmail || !privateKey) {
           throw new Error('File JSON không chứa client_email hoặc private_key hợp lệ.')
         }
 
-        // Test sign & get token
         const token = await gscApi.getAccessTokenFromServiceAccount(clientEmail, privateKey)
         const sites = await gscApi.getSites(token)
 
@@ -71,7 +62,6 @@ export const GoogleSearchConsole: React.FC = () => {
 
         addGscAccount(newAcc)
 
-        // Add discovered sites
         for (const s of sites) {
           const domain = s.siteUrl.replace(/^https?:\/\//, '').replace(/^sc-domain:/, '').replace(/\/$/, '')
           upsertGscProperty({
@@ -89,14 +79,14 @@ export const GoogleSearchConsole: React.FC = () => {
 
         addToast({
           type: 'success',
-          title: 'Kết nối GSC thành công',
-          message: `Đã tìm thấy ${sites.length} website thuộc Service Account này.`,
+          title: 'Kết nối thành công',
+          message: `Đã tìm thấy ${sites.length} website trong Google Search Console.`,
         })
       } else {
         const sites = await gscApi.getSites(oauthTokenText.trim())
         const newAcc: GSCAccount = {
           id: Math.random().toString(36).substring(2, 9),
-          name: accName.trim() || 'Google Account (OAuth)',
+          name: accName.trim() || 'Google Account',
           type: 'token',
           token: oauthTokenText.trim(),
           createdAt: new Date().toISOString(),
@@ -120,7 +110,7 @@ export const GoogleSearchConsole: React.FC = () => {
 
         addToast({
           type: 'success',
-          title: 'Kết nối GSC thành công',
+          title: 'Kết nối thành công',
           message: `Đã đồng bộ ${sites.length} website từ OAuth token.`,
         })
       }
@@ -130,7 +120,7 @@ export const GoogleSearchConsole: React.FC = () => {
       setJsonKeyText('')
       setOauthTokenText('')
     } catch (err: any) {
-      addToast({ type: 'error', title: 'Kết nối thất bại', message: err.message })
+      addToast({ type: 'error', title: 'Lỗi kết nối', message: err.message })
     } finally {
       setConnecting(false)
     }
@@ -169,11 +159,11 @@ export const GoogleSearchConsole: React.FC = () => {
 
       addToast({
         type: 'success',
-        title: 'Đồng bộ GSC hoàn tất',
+        title: 'Đồng bộ hoàn tất',
         message: `${prop.domain}: ${perf.clicks.toLocaleString()} clicks trong 28 ngày qua.`,
       })
     } catch (err: any) {
-      addToast({ type: 'error', title: 'Đồng bộ thất bại', message: err.message })
+      addToast({ type: 'error', title: 'Lỗi đồng bộ', message: err.message })
     } finally {
       setSyncingId(null)
     }
@@ -183,7 +173,6 @@ export const GoogleSearchConsole: React.FC = () => {
     p.domain.toLowerCase().includes(search.toLowerCase()) || p.siteUrl.toLowerCase().includes(search.toLowerCase())
   )
 
-  // Overall totals
   const totalClicks = gscProperties.reduce((sum, p) => sum + p.clicks, 0)
   const totalImpressions = gscProperties.reduce((sum, p) => sum + p.impressions, 0)
   const avgCtr =
@@ -194,103 +183,71 @@ export const GoogleSearchConsole: React.FC = () => {
       {/* Top Controls */}
       <div className="flex items-center justify-between gap-4 pb-4 border-b border-[var(--border-subtle)] shrink-0">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
-            <h2 className="text-sm font-semibold text-[var(--text-primary)]">
-              Google Search Console Central Hub
-            </h2>
-          </div>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-            {gscProperties.length} Websites
-          </span>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+            Google Search Console
+          </h2>
+          <Badge variant="info">{gscProperties.length} Websites</Badge>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowAccountModal(true)}
-            className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex items-center gap-1.5 shadow-md shadow-blue-950 transition-colors"
-          >
-            <Plus size={14} />
-            <span>Thêm Google Service Account</span>
-          </button>
-        </div>
+        <Button
+          variant="primary"
+          size="sm"
+          leftIcon={<Plus size={13} />}
+          onClick={() => setShowAccountModal(true)}
+        >
+          Thêm tài khoản Google
+        </Button>
       </div>
 
       {/* KPI Overview Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 my-4 shrink-0">
-        <div className="p-3.5 rounded-xl glass-card space-y-1">
-          <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)]">
-            <span>Tổng Clicks (28 ngày)</span>
-            <MousePointerClick size={14} className="text-blue-400" />
-          </div>
-          <div className="text-lg font-bold font-mono text-[var(--text-primary)]">
-            {totalClicks.toLocaleString()}
-          </div>
-        </div>
-
-        <div className="p-3.5 rounded-xl glass-card space-y-1">
-          <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)]">
-            <span>Tổng Lượt Hiển thị</span>
-            <Eye size={14} className="text-indigo-400" />
-          </div>
-          <div className="text-lg font-bold font-mono text-[var(--text-primary)]">
-            {totalImpressions.toLocaleString()}
-          </div>
-        </div>
-
-        <div className="p-3.5 rounded-xl glass-card space-y-1">
-          <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)]">
-            <span>CTR Trung bình</span>
-            <Percent size={14} className="text-emerald-400" />
-          </div>
-          <div className="text-lg font-bold font-mono text-emerald-400">
-            {avgCtr}%
-          </div>
-        </div>
-
-        <div className="p-3.5 rounded-xl glass-card space-y-1">
-          <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)]">
-            <span>Tài khoản kết nối</span>
-            <ShieldCheck size={14} className="text-amber-400" />
-          </div>
-          <div className="text-lg font-bold font-mono text-[var(--text-primary)]">
-            {gscAccounts.length} Accounts
-          </div>
-        </div>
+        <StatCard
+          label="Tổng Clicks (28 ngày)"
+          value={totalClicks.toLocaleString()}
+          icon={<MousePointerClick size={14} className="text-blue-400" />}
+        />
+        <StatCard
+          label="Tổng Lượt Hiển thị"
+          value={totalImpressions.toLocaleString()}
+          icon={<Eye size={14} className="text-indigo-400" />}
+        />
+        <StatCard
+          label="CTR Trung bình"
+          value={`${avgCtr}%`}
+          icon={<Percent size={14} className="text-emerald-400" />}
+        />
+        <StatCard
+          label="Tài khoản kết nối"
+          value={`${gscAccounts.length} Tài khoản`}
+          icon={<ShieldCheck size={14} className="text-amber-400" />}
+        />
       </div>
 
       {/* Main Grid: Sites list on Left, Deep details on Right */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
         {/* Left Col: Properties List */}
-        <div className="lg:col-span-5 flex flex-col rounded-2xl glass-card p-4 overflow-hidden">
-          <div className="flex items-center gap-2 pb-3 border-b border-[var(--border-subtle)]">
-            <div className="relative flex-1">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-              <input
-                type="text"
-                placeholder="Tìm tên miền..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] outline-none"
-              />
-            </div>
+        <div className="lg:col-span-5 flex flex-col rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] p-4 overflow-hidden">
+          <div className="pb-3 border-b border-[var(--border-subtle)]">
+            <Input
+              placeholder="Tìm tên miền..."
+              leftIcon={<Search size={13} />}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
 
           <div className="flex-1 overflow-y-auto mt-2 space-y-2 pr-1">
             {gscProperties.length === 0 ? (
-              <div className="py-16 text-center text-xs text-[var(--text-muted)] space-y-2">
-                <Globe size={28} className="mx-auto text-[var(--text-dim)]" />
-                <div>Chưa kết nối tài khoản Google Search Console nào.</div>
-                <button
-                  onClick={() => setShowAccountModal(true)}
-                  className="text-xs text-blue-400 hover:underline"
-                >
-                  Bấm vào đây để tải JSON Key Service Account
-                </button>
-              </div>
+              <EmptyState
+                icon={Globe}
+                title="Chưa có website nào"
+                description="Kết nối tài khoản Google Search Console để bắt đầu theo dõi hiệu suất tìm kiếm."
+                actionLabel="Thêm tài khoản ngay"
+                onAction={() => setShowAccountModal(true)}
+              />
             ) : filteredProps.length === 0 ? (
               <div className="py-12 text-center text-xs text-[var(--text-muted)]">
-                Không tìm thấy website khớp với từ khóa tìm kiếm.
+                Không tìm thấy website nào khớp với từ khóa tìm kiếm.
               </div>
             ) : (
               filteredProps.map((prop) => {
@@ -303,7 +260,7 @@ export const GoogleSearchConsole: React.FC = () => {
                     onClick={() => setSelectedProp(prop)}
                     className={`p-3 rounded-xl cursor-pointer transition-all border ${
                       isSelected
-                        ? 'bg-blue-600/15 border-blue-500/30 shadow-[0_0_12px_rgba(59,130,246,0.15)]'
+                        ? 'bg-blue-600/15 border-blue-500/30 shadow-sm'
                         : 'bg-[var(--bg-base)] border-[var(--border-subtle)] hover:border-[var(--border-mid)]'
                     }`}
                   >
@@ -311,17 +268,19 @@ export const GoogleSearchConsole: React.FC = () => {
                       <span className="font-semibold text-xs text-[var(--text-primary)] truncate flex-1">
                         {prop.domain}
                       </span>
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleSyncProperty(prop)
                         }}
                         disabled={isSyncing}
-                        title="Đồng bộ số liệu GSC"
-                        className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-blue-400"
+                        title="Đồng bộ số liệu"
+                        className="h-6 w-6"
                       >
-                        <RotateCw size={13} className={isSyncing ? 'animate-spin text-blue-400' : ''} />
-                      </button>
+                        <RotateCw size={12} className={isSyncing ? 'animate-spin text-blue-400' : ''} />
+                      </Button>
                     </div>
 
                     <div className="grid grid-cols-4 gap-2 mt-2 pt-2 border-t border-[var(--border-subtle)] font-mono text-[10px]">
@@ -330,7 +289,7 @@ export const GoogleSearchConsole: React.FC = () => {
                         <div className="font-bold text-blue-400">{prop.clicks.toLocaleString()}</div>
                       </div>
                       <div>
-                        <div className="text-[var(--text-muted)]">Impr</div>
+                        <div className="text-[var(--text-muted)]">Hiển thị</div>
                         <div className="font-bold text-[var(--text-primary)]">{prop.impressions.toLocaleString()}</div>
                       </div>
                       <div>
@@ -349,8 +308,8 @@ export const GoogleSearchConsole: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Col: Deep Details (Top Queries & Pages) */}
-        <div className="lg:col-span-7 flex flex-col rounded-2xl glass-card p-4 overflow-hidden">
+        {/* Right Col: Deep Details */}
+        <div className="lg:col-span-7 flex flex-col rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] p-4 overflow-hidden">
           {selectedProp ? (
             <>
               <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
@@ -369,31 +328,32 @@ export const GoogleSearchConsole: React.FC = () => {
                     </a>
                   </h3>
                   <div className="text-[10px] text-[var(--text-muted)] font-mono">
-                    URL: {selectedProp.siteUrl}
+                    {selectedProp.siteUrl}
                   </div>
                 </div>
 
-                <button
+                <Button
+                  variant="primary"
+                  size="sm"
+                  leftIcon={<RotateCw size={12} className={syncingId === selectedProp.id ? 'animate-spin' : ''} />}
                   onClick={() => handleSyncProperty(selectedProp)}
                   disabled={syncingId === selectedProp.id}
-                  className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex items-center gap-1.5 transition-colors shadow-md shadow-blue-950"
                 >
-                  <RotateCw size={12} className={syncingId === selectedProp.id ? 'animate-spin' : ''} />
-                  <span>Đồng bộ 28 ngày</span>
-                </button>
+                  Đồng bộ 28 ngày
+                </Button>
               </div>
 
-              {/* Subtabs: Top Queries vs Top Pages */}
+              {/* Subtables */}
               <div className="flex-1 overflow-y-auto mt-3 space-y-4 pr-1">
-                {/* Top Queries Table */}
+                {/* Top Queries */}
                 <div className="space-y-2">
                   <h4 className="text-[11px] font-semibold text-blue-400 flex items-center gap-1">
                     <TrendingUp size={13} />
-                    <span>Top Từ Khóa Tìm Kiếm (Top Queries)</span>
+                    <span>Top Từ khóa Tìm kiếm</span>
                   </h4>
 
                   {!selectedProp.queryMetrics || selectedProp.queryMetrics.length === 0 ? (
-                    <div className="p-4 rounded-xl bg-[var(--bg-base)] text-center text-[11px] text-[var(--text-muted)]">
+                    <div className="p-4 rounded-xl bg-[var(--bg-base)] text-center text-[11px] text-[var(--text-muted)] border border-[var(--border-subtle)]">
                       Chưa có dữ liệu từ khóa. Hãy bấm "Đồng bộ 28 ngày" ở trên.
                     </div>
                   ) : (
@@ -401,7 +361,7 @@ export const GoogleSearchConsole: React.FC = () => {
                       <table className="w-full text-left font-mono">
                         <thead className="bg-[var(--bg-elevated)] text-[10px] text-[var(--text-muted)] uppercase">
                           <tr>
-                            <th className="p-2">Từ khóa (Query)</th>
+                            <th className="p-2">Từ khóa</th>
                             <th className="p-2 text-right">Clicks</th>
                             <th className="p-2 text-right">Hiển thị</th>
                             <th className="p-2 text-right">CTR</th>
@@ -424,15 +384,15 @@ export const GoogleSearchConsole: React.FC = () => {
                   )}
                 </div>
 
-                {/* Top Pages Table */}
+                {/* Top Pages */}
                 <div className="space-y-2">
                   <h4 className="text-[11px] font-semibold text-indigo-400 flex items-center gap-1">
                     <BarChart2 size={13} />
-                    <span>Top Trang Đích (Top Landing Pages)</span>
+                    <span>Top Trang Đích</span>
                   </h4>
 
                   {!selectedProp.pageMetrics || selectedProp.pageMetrics.length === 0 ? (
-                    <div className="p-4 rounded-xl bg-[var(--bg-base)] text-center text-[11px] text-[var(--text-muted)]">
+                    <div className="p-4 rounded-xl bg-[var(--bg-base)] text-center text-[11px] text-[var(--text-muted)] border border-[var(--border-subtle)]">
                       Chưa có dữ liệu trang đích.
                     </div>
                   ) : (
@@ -440,7 +400,7 @@ export const GoogleSearchConsole: React.FC = () => {
                       <table className="w-full text-left font-mono">
                         <thead className="bg-[var(--bg-elevated)] text-[10px] text-[var(--text-muted)] uppercase">
                           <tr>
-                            <th className="p-2">Đường dẫn trang</th>
+                            <th className="p-2">Đường dẫn</th>
                             <th className="p-2 text-right">Clicks</th>
                             <th className="p-2 text-right">Hiển thị</th>
                             <th className="p-2 text-right">CTR</th>
@@ -463,108 +423,88 @@ export const GoogleSearchConsole: React.FC = () => {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-xs text-[var(--text-muted)]">
-              <Globe size={32} className="text-[var(--text-dim)] mb-2" />
-              <span>Chọn một website từ danh sách bên trái để xem chi tiết từ khóa & trang đích.</span>
-            </div>
+            <EmptyState
+              icon={Globe}
+              title="Chưa chọn website"
+              description="Chọn một website từ danh sách bên trái để kiểm tra chi tiết từ khóa và trang đích."
+            />
           )}
         </div>
       </div>
 
       {/* Account Modal */}
-      {showAccountModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-lg p-6 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-mid)] shadow-2xl space-y-4">
-            <h3 className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2">
-              <FileJson size={16} className="text-blue-400" />
-              <span>Kết nối Google Search Console qua Service Account</span>
-            </h3>
-
-            <div className="flex rounded-lg bg-[var(--bg-base)] p-1 border border-[var(--border-subtle)] text-xs">
-              <button
-                type="button"
-                onClick={() => setAccType('service_account')}
-                className={`flex-1 py-1 rounded text-center font-medium ${
-                  accType === 'service_account' ? 'bg-blue-600 text-white font-semibold' : 'text-[var(--text-muted)]'
-                }`}
-              >
-                Service Account JSON (Khuyên dùng)
-              </button>
-              <button
-                type="button"
-                onClick={() => setAccType('token')}
-                className={`flex-1 py-1 rounded text-center font-medium ${
-                  accType === 'token' ? 'bg-blue-600 text-white font-semibold' : 'text-[var(--text-muted)]'
-                }`}
-              >
-                OAuth Access Token
-              </button>
-            </div>
-
-            <form onSubmit={handleAddAccount} className="space-y-3.5">
-              <div className="space-y-1">
-                <label className="text-[11px] text-[var(--text-secondary)]">Tên gợi nhớ (Tùy chọn)</label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Google Cloud Project A"
-                  value={accName}
-                  onChange={(e) => setAccName(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] outline-none"
-                />
-              </div>
-
-              {accType === 'service_account' ? (
-                <div className="space-y-1">
-                  <label className="text-[11px] text-[var(--text-secondary)]">
-                    Nội dung tệp JSON Key của Service Account
-                  </label>
-                  <textarea
-                    rows={6}
-                    placeholder='{"type": "service_account", "project_id": "...", "private_key": "...", "client_email": "..."}'
-                    value={jsonKeyText}
-                    onChange={(e) => setJsonKeyText(e.target.value)}
-                    className="w-full p-2.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-subtle)] focus:border-blue-500 text-xs font-mono text-[var(--text-primary)] outline-none resize-none"
-                    required
-                  />
-                  <p className="text-[10px] text-[var(--text-muted)]">
-                    Lưu ý: Bạn phải thêm email của Service Account này vào mục "Users and permissions" trên Google Search Console với quyền <b>Viewer</b>.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  <label className="text-[11px] text-[var(--text-secondary)]">Google OAuth Access Token</label>
-                  <input
-                    type="password"
-                    placeholder="ya29.a0Ac..."
-                    value={oauthTokenText}
-                    onChange={(e) => setOauthTokenText(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs font-mono text-[var(--text-primary)] outline-none"
-                    required
-                  />
-                </div>
-              )}
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
-                <button
-                  type="button"
-                  onClick={() => setShowAccountModal(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={connecting}
-                  className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium text-xs flex items-center gap-1.5 shadow-md shadow-blue-950"
-                >
-                  {connecting ? <Loader2 size={13} className="animate-spin" /> : null}
-                  <span>Xác thực & Kết nối Ngay</span>
-                </button>
-              </div>
-            </form>
-          </div>
+      <Modal
+        isOpen={showAccountModal}
+        onClose={() => setShowAccountModal(false)}
+        title="Thêm tài khoản Google Search Console"
+        description="Kết nối tài khoản thông qua tệp Service Account JSON hoặc Access Token."
+        icon={<FileJson size={18} className="text-blue-400" />}
+      >
+        <div className="flex rounded-lg bg-[var(--bg-base)] p-1 border border-[var(--border-subtle)] text-xs mb-3">
+          <button
+            type="button"
+            onClick={() => setAccType('service_account')}
+            className={`flex-1 py-1 rounded text-center font-medium transition-colors ${
+              accType === 'service_account' ? 'bg-blue-600 text-white font-semibold' : 'text-[var(--text-muted)]'
+            }`}
+          >
+            Service Account JSON (Khuyên dùng)
+          </button>
+          <button
+            type="button"
+            onClick={() => setAccType('token')}
+            className={`flex-1 py-1 rounded text-center font-medium transition-colors ${
+              accType === 'token' ? 'bg-blue-600 text-white font-semibold' : 'text-[var(--text-muted)]'
+            }`}
+          >
+            OAuth Access Token
+          </button>
         </div>
-      )}
+
+        <form onSubmit={handleAddAccount} className="space-y-3">
+          <div className="space-y-1">
+            <label className="text-[11px] text-[var(--text-secondary)]">Tên gợi nhớ</label>
+            <Input
+              placeholder="Ví dụ: Dự án chính"
+              value={accName}
+              onChange={(e) => setAccName(e.target.value)}
+            />
+          </div>
+
+          {accType === 'service_account' ? (
+            <div className="space-y-1">
+              <label className="text-[11px] text-[var(--text-secondary)]">Nội dung JSON Key</label>
+              <Textarea
+                rows={5}
+                placeholder='{"type": "service_account", "client_email": "...", "private_key": "..."}'
+                value={jsonKeyText}
+                onChange={(e) => setJsonKeyText(e.target.value)}
+                required
+              />
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <label className="text-[11px] text-[var(--text-secondary)]">Access Token</label>
+              <Input
+                type="password"
+                placeholder="ya29.a0Ac..."
+                value={oauthTokenText}
+                onChange={(e) => setOauthTokenText(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
+            <Button variant="ghost" size="sm" type="button" onClick={() => setShowAccountModal(false)}>
+              Hủy
+            </Button>
+            <Button variant="primary" size="sm" type="submit" isLoading={connecting}>
+              Kết nối ngay
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

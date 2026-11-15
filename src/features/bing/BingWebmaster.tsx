@@ -1,24 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import {
   Plus,
-  Trash2,
   KeyRound,
   RotateCw,
   Send,
   CheckCircle2,
-  AlertCircle,
-  Loader2,
   TrendingUp,
   Globe,
-  ExternalLink,
-  ShieldCheck,
 } from 'lucide-react'
 import { useAppStore } from '../../lib/useAppStore'
 import { bingApi } from './api'
 import { BingAccount, BingSite, BingQueryStat, BingQuota } from '../../types'
+import { Button, Input, Textarea, Modal, Badge, EmptyState } from '../../components/ui'
 
 export const BingWebmaster: React.FC = () => {
-  const { bingAccounts, addBingAccount, removeBingAccount, addToast, showConfirm } = useAppStore()
+  const { bingAccounts, addBingAccount, addToast } = useAppStore()
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [accountName, setAccountName] = useState('')
@@ -64,12 +60,10 @@ export const BingWebmaster: React.FC = () => {
     loadAllSites()
   }, [bingAccounts])
 
-  // Select site to view stats
   const handleSelectSite = async (site: BingSite) => {
     setSelectedSite(site)
     setLoadingStats(true)
 
-    // find apiKey
     const acc = bingAccounts[0]
     if (acc) {
       const [q, stats] = await Promise.all([
@@ -93,7 +87,7 @@ export const BingWebmaster: React.FC = () => {
 
       const newAcc: BingAccount = {
         id: Math.random().toString(36).substring(2, 9),
-        name: accountName.trim() || 'Bing Account',
+        name: accountName.trim() || 'Bing Webmaster',
         apiKey: apiKey.trim(),
         createdAt: new Date().toISOString(),
       }
@@ -105,7 +99,7 @@ export const BingWebmaster: React.FC = () => {
 
       addToast({
         type: 'success',
-        title: 'Kết nối Bing thành công',
+        title: 'Kết nối thành công',
         message: `Đã tìm thấy ${fetchedSites.length} websites trên Bing Webmaster Tools.`,
       })
     } catch (err: any) {
@@ -136,11 +130,10 @@ export const BingWebmaster: React.FC = () => {
         addToast({ type: 'success', title: 'Submit hoàn tất', message: res.message })
         setUrlsInput('')
         setShowSubmitModal(false)
-        // reload quota
         const q = await bingApi.getQuota(bingAccounts[0].apiKey, selectedSite.url)
         setQuota(q)
       } else {
-        addToast({ type: 'error', title: 'Submit thất bại', message: res.message })
+        addToast({ type: 'error', title: 'Thất bại', message: res.message })
       }
     } catch (err: any) {
       addToast({ type: 'error', message: err.message })
@@ -154,54 +147,50 @@ export const BingWebmaster: React.FC = () => {
       {/* Top Banner */}
       <div className="flex items-center justify-between pb-4 border-b border-[var(--border-subtle)] shrink-0">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-pulse"></span>
-            <h2 className="text-sm font-semibold text-[var(--text-primary)]">
-              Bing Webmaster Tools Manager
-            </h2>
-          </div>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-            {sites.length} Sites
-          </span>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+            Bing Webmaster Tools
+          </h2>
+          <Badge variant="info">{sites.length} Tên miền</Badge>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs flex items-center gap-1.5 shadow-md shadow-cyan-950 transition-colors"
-          >
-            <Plus size={14} />
-            <span>Thêm Bing API Key</span>
-          </button>
-        </div>
+        <Button
+          variant="primary"
+          size="sm"
+          leftIcon={<Plus size={13} />}
+          onClick={() => setShowAddModal(true)}
+        >
+          Thêm Bing API Key
+        </Button>
       </div>
 
       {/* Main Grid */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden mt-4">
         {/* Left Col: Sites */}
-        <div className="lg:col-span-5 flex flex-col rounded-2xl glass-card p-4 overflow-hidden">
+        <div className="lg:col-span-5 flex flex-col rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] p-4 overflow-hidden">
           <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
             <span className="text-xs font-semibold text-[var(--text-primary)]">
-              Danh sách Websites trên Bing ({sites.length})
+              Danh sách Websites ({sites.length})
             </span>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={loadAllSites}
               disabled={loadingSites}
-              className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-cyan-400"
+              className="h-6 w-6"
             >
-              <RotateCw size={13} className={loadingSites ? 'animate-spin' : ''} />
-            </button>
+              <RotateCw size={12} className={loadingSites ? 'animate-spin' : ''} />
+            </Button>
           </div>
 
           <div className="flex-1 overflow-y-auto mt-2 space-y-2 pr-1">
             {bingAccounts.length === 0 ? (
-              <div className="py-16 text-center text-xs text-[var(--text-muted)] space-y-2">
-                <Globe size={28} className="mx-auto text-[var(--text-dim)]" />
-                <div>Chưa có API Key Bing Webmaster nào.</div>
-                <button onClick={() => setShowAddModal(true)} className="text-xs text-cyan-400 hover:underline">
-                  Thêm API Key tại đây
-                </button>
-              </div>
+              <EmptyState
+                icon={Globe}
+                title="Chưa kết nối Bing"
+                description="Thêm API Key từ Bing Webmaster Tools để đồng bộ website."
+                actionLabel="Thêm API Key"
+                onAction={() => setShowAddModal(true)}
+              />
             ) : sites.length === 0 ? (
               <div className="py-12 text-center text-xs text-[var(--text-muted)]">
                 Không tìm thấy website nào trong tài khoản Bing này.
@@ -215,7 +204,7 @@ export const BingWebmaster: React.FC = () => {
                     onClick={() => handleSelectSite(site)}
                     className={`p-3 rounded-xl cursor-pointer transition-all border ${
                       isSelected
-                        ? 'bg-cyan-600/15 border-cyan-500/30 shadow-[0_0_12px_rgba(6,182,212,0.15)]'
+                        ? 'bg-cyan-600/15 border-cyan-500/30 shadow-sm'
                         : 'bg-[var(--bg-base)] border-[var(--border-subtle)] hover:border-[var(--border-mid)]'
                     }`}
                   >
@@ -224,14 +213,13 @@ export const BingWebmaster: React.FC = () => {
                         {site.url}
                       </span>
                       {site.isVerified && (
-                        <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">
-                          <CheckCircle2 size={10} />
-                          <span>Verified</span>
-                        </span>
+                        <Badge variant="success" size="sm">
+                          Đã xác minh
+                        </Badge>
                       )}
                     </div>
                     <div className="text-[10px] text-[var(--text-muted)] font-mono mt-1">
-                      Vai trò: {site.role}
+                      Quyền: {site.role}
                     </div>
                   </div>
                 )
@@ -241,50 +229,47 @@ export const BingWebmaster: React.FC = () => {
         </div>
 
         {/* Right Col: Details, Quota & Submit */}
-        <div className="lg:col-span-7 flex flex-col rounded-2xl glass-card p-4 overflow-hidden">
+        <div className="lg:col-span-7 flex flex-col rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] p-4 overflow-hidden">
           {selectedSite ? (
             <>
               <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
                 <div>
                   <h3 className="text-xs font-semibold text-[var(--text-primary)]">{selectedSite.url}</h3>
                   <div className="text-[10px] text-[var(--text-muted)] font-mono">
-                    Hạn mức Submit: {quota ? `${quota.dailyQuota} URLs/ngày` : 'Đang tải...'}
+                    Hạn mức gửi: {quota ? `${quota.dailyQuota} URLs/ngày` : 'Đang tải...'}
                   </div>
                 </div>
 
-                <button
+                <Button
+                  variant="primary"
+                  size="sm"
+                  leftIcon={<Send size={12} />}
                   onClick={() => setShowSubmitModal(true)}
-                  className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs flex items-center gap-1.5 shadow-md shadow-cyan-950 transition-colors"
                 >
-                  <Send size={12} />
-                  <span>Submit URLs Bing</span>
-                </button>
+                  Gửi URL tới Bing
+                </Button>
               </div>
 
               {/* Query Stats */}
               <div className="flex-1 overflow-y-auto mt-3 space-y-3 pr-1">
                 <h4 className="text-[11px] font-semibold text-cyan-400 flex items-center gap-1">
                   <TrendingUp size={13} />
-                  <span>Hiệu suất Từ khóa trên Bing (Query Stats)</span>
+                  <span>Hiệu suất tìm kiếm từ khóa trên Bing</span>
                 </h4>
 
-                {loadingStats ? (
-                  <div className="py-12 flex justify-center text-xs text-[var(--text-muted)]">
-                    <Loader2 size={18} className="animate-spin text-cyan-400" />
-                  </div>
-                ) : queryStats.length === 0 ? (
-                  <div className="p-4 rounded-xl bg-[var(--bg-base)] text-center text-[11px] text-[var(--text-muted)]">
-                    Chưa có số liệu tìm kiếm từ khóa trên Bing cho website này.
+                {queryStats.length === 0 ? (
+                  <div className="p-4 rounded-xl bg-[var(--bg-base)] text-center text-[11px] text-[var(--text-muted)] border border-[var(--border-subtle)]">
+                    Chưa có số liệu từ khóa trên Bing cho website này.
                   </div>
                 ) : (
                   <div className="rounded-xl border border-[var(--border-subtle)] overflow-hidden text-xs">
                     <table className="w-full text-left font-mono">
                       <thead className="bg-[var(--bg-elevated)] text-[10px] text-[var(--text-muted)] uppercase">
                         <tr>
-                          <th className="p-2">Từ khóa (Query)</th>
+                          <th className="p-2">Từ khóa</th>
                           <th className="p-2 text-right">Clicks</th>
                           <th className="p-2 text-right">Hiển thị</th>
-                          <th className="p-2 text-right">Vị trí TB</th>
+                          <th className="p-2 text-right">Vị trí</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border-subtle)] bg-[var(--bg-base)] text-[11px]">
@@ -303,121 +288,85 @@ export const BingWebmaster: React.FC = () => {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-xs text-[var(--text-muted)]">
-              <Globe size={32} className="text-[var(--text-dim)] mb-2" />
-              <span>Chọn một website từ danh sách bên trái để quản lý và submit URL lên Bing.</span>
-            </div>
+            <EmptyState
+              icon={Globe}
+              title="Chưa chọn website"
+              description="Chọn một website từ danh sách bên trái để quản lý và gửi URL lên Bing."
+            />
           )}
         </div>
       </div>
 
       {/* Modal Add API Key */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md p-6 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-mid)] shadow-2xl space-y-4">
-            <h3 className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2">
-              <KeyRound size={16} className="text-cyan-400" />
-              <span>Thêm Bing Webmaster API Key</span>
-            </h3>
-
-            <form onSubmit={handleAddAccount} className="space-y-3.5">
-              <div className="space-y-1">
-                <label className="text-[11px] text-[var(--text-secondary)]">Tên tài khoản (Tùy chọn)</label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Bing Cá Nhân"
-                  value={accountName}
-                  onChange={(e) => setAccountName(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] text-[var(--text-secondary)]">Bing Webmaster API Key</label>
-                <input
-                  type="password"
-                  placeholder="32 ký tự hex key"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs font-mono text-[var(--text-primary)] outline-none"
-                  required
-                />
-                <p className="text-[10px] text-[var(--text-muted)]">
-                  Lấy API key tại: Bing Webmaster Tools → Cài đặt (Settings) → Quản lý truy cập API (API Access).
-                </p>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={connecting}
-                  className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white font-medium text-xs flex items-center gap-1.5 shadow-md shadow-cyan-950"
-                >
-                  {connecting ? <Loader2 size={13} className="animate-spin" /> : null}
-                  <span>Lưu & Kết nối</span>
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        title="Thêm Bing Webmaster API Key"
+        description="Lấy API Key tại mục Cài đặt (Settings) trên Bing Webmaster Tools."
+        icon={<KeyRound size={18} className="text-cyan-400" />}
+      >
+        <form onSubmit={handleAddAccount} className="space-y-3">
+          <div className="space-y-1">
+            <label className="text-[11px] text-[var(--text-secondary)]">Tên tài khoản (Tùy chọn)</label>
+            <Input
+              placeholder="Ví dụ: Tài khoản Bing"
+              value={accountName}
+              onChange={(e) => setAccountName(e.target.value)}
+            />
           </div>
-        </div>
-      )}
+
+          <div className="space-y-1">
+            <label className="text-[11px] text-[var(--text-secondary)]">API Key</label>
+            <Input
+              type="password"
+              placeholder="32 ký tự hex"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
+            <Button variant="ghost" size="sm" type="button" onClick={() => setShowAddModal(false)}>
+              Hủy
+            </Button>
+            <Button variant="primary" size="sm" type="submit" isLoading={connecting}>
+              Lưu kết nối
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Modal Submit URLs to Bing */}
-      {showSubmitModal && selectedSite && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md p-6 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-mid)] shadow-2xl space-y-4">
-            <h3 className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2">
-              <Send size={16} className="text-cyan-400" />
-              <span>Gửi URL lập chỉ mục tức thì tới Bing Bot</span>
-            </h3>
-
-            <div className="text-[11px] text-[var(--text-muted)] font-mono">
-              Website: <span className="text-cyan-400">{selectedSite.url}</span>
-            </div>
-
-            <form onSubmit={handleSubmitUrls} className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-[11px] text-[var(--text-secondary)]">
-                  Danh sách URLs (mỗi URL một dòng)
-                </label>
-                <textarea
-                  rows={6}
-                  placeholder={`${selectedSite.url}bai-viet-1&#10;${selectedSite.url}bai-viet-2`}
-                  value={urlsInput}
-                  onChange={(e) => setUrlsInput(e.target.value)}
-                  className="w-full p-2.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs font-mono text-[var(--text-primary)] outline-none resize-none"
-                  required
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
-                <button
-                  type="button"
-                  onClick={() => setShowSubmitModal(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white font-medium text-xs flex items-center gap-1.5 shadow-md shadow-cyan-950"
-                >
-                  {submitting ? <Loader2 size={13} className="animate-spin" /> : null}
-                  <span>Submit Ngay</span>
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showSubmitModal && !!selectedSite}
+        onClose={() => setShowSubmitModal(false)}
+        title="Gửi URL lập chỉ mục tới Bing"
+        description={selectedSite?.url}
+        icon={<Send size={18} className="text-cyan-400" />}
+      >
+        <form onSubmit={handleSubmitUrls} className="space-y-3">
+          <div className="space-y-1">
+            <label className="text-[11px] text-[var(--text-secondary)]">Danh sách URLs (mỗi URL một dòng)</label>
+            <Textarea
+              rows={5}
+              placeholder={`${selectedSite?.url}bai-viet-1&#10;${selectedSite?.url}bai-viet-2`}
+              value={urlsInput}
+              onChange={(e) => setUrlsInput(e.target.value)}
+              required
+            />
           </div>
-        </div>
-      )}
+
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
+            <Button variant="ghost" size="sm" type="button" onClick={() => setShowSubmitModal(false)}>
+              Hủy
+            </Button>
+            <Button variant="primary" size="sm" type="submit" isLoading={submitting}>
+              Gửi ngay
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

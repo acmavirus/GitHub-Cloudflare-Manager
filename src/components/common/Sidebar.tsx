@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useAppStore } from '../../lib/useAppStore'
 import { ActiveView } from '../../types'
+import { Badge } from '../ui'
 
 interface NavSection {
   title: string
@@ -31,23 +32,23 @@ export const Sidebar: React.FC = () => {
 
   const sections: NavSection[] = [
     {
-      title: 'DevOps & Code',
+      title: 'Quản lý dự án',
       items: [
         {
           id: 'github',
-          label: 'GitHub Repos',
+          label: 'GitHub Repositories',
           icon: FolderGit2,
         },
         {
           id: 'kanban',
-          label: 'Kanban Tasks',
+          label: 'Công việc Kanban',
           icon: KanbanSquare,
           badge: kanbanTasks.length > 0 ? kanbanTasks.length : undefined,
         },
       ],
     },
     {
-      title: 'Domains & Cloud',
+      title: 'Tên miền & DNS',
       items: [
         {
           id: 'cf-domains',
@@ -56,14 +57,14 @@ export const Sidebar: React.FC = () => {
         },
         {
           id: 'cf-accounts',
-          label: 'Cloudflare Accounts',
+          label: 'Tài khoản Cloudflare',
           icon: KeyRound,
           badge: cfAccounts.length > 0 ? cfAccounts.length : undefined,
         },
       ],
     },
     {
-      title: 'Search Engines & SEO',
+      title: 'Công cụ tìm kiếm & SEO',
       items: [
         {
           id: 'gsc',
@@ -85,7 +86,7 @@ export const Sidebar: React.FC = () => {
         },
         {
           id: 'indexing-hub',
-          label: 'Fast Indexing Hub',
+          label: 'Lập chỉ mục nhanh',
           icon: Zap,
         },
         {
@@ -96,16 +97,16 @@ export const Sidebar: React.FC = () => {
       ],
     },
     {
-      title: 'Diagnostics & System',
+      title: 'Tiện ích hệ thống',
       items: [
         {
           id: 'auditor',
-          label: 'Domain Auditor',
+          label: 'Kiểm toán tên miền',
           icon: SearchCode,
         },
         {
           id: 'settings',
-          label: 'System Settings',
+          label: 'Cài đặt',
           icon: Settings,
         },
       ],
@@ -116,15 +117,15 @@ export const Sidebar: React.FC = () => {
     <aside className="w-64 h-full bg-[var(--bg-base)] border-r border-[var(--border-subtle)] flex flex-col shrink-0 select-none">
       {/* Brand Header */}
       <div className="h-16 flex items-center gap-3 px-5 border-b border-[var(--border-subtle)]">
-        <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-sm tracking-wider shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+        <div className="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-xs tracking-wider shadow-sm">
           GC
         </div>
         <div>
-          <div className="font-semibold text-sm tracking-tight text-[var(--text-primary)]">
+          <div className="font-semibold text-xs tracking-tight text-[var(--text-primary)]">
             GITCORE
           </div>
-          <div className="text-[11px] text-[var(--text-muted)] font-mono">
-            v2.1 • Webmaster Suite
+          <div className="text-[10px] text-[var(--text-muted)] font-mono">
+            Bảng điều khiển v2.2
           </div>
         </div>
       </div>
@@ -132,8 +133,8 @@ export const Sidebar: React.FC = () => {
       {/* Navigation Groups */}
       <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
         {sections.map((sec, idx) => (
-          <div key={idx} className="space-y-1">
-            <div className="text-[10px] font-bold tracking-wider text-[var(--text-muted)] uppercase px-3 py-1">
+          <div key={idx} className="space-y-0.5">
+            <div className="text-[10px] font-semibold tracking-wider text-[var(--text-muted)] uppercase px-3 py-1">
               {sec.title}
             </div>
 
@@ -145,21 +146,21 @@ export const Sidebar: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => setActiveView(item.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                     isActive
-                      ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.15)] font-semibold'
+                      ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/30 shadow-sm font-semibold'
                       : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] border border-transparent'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 truncate">
-                    <Icon size={15} className={isActive ? 'text-indigo-400' : 'text-[var(--text-muted)]'} />
+                    <Icon size={14} className={isActive ? 'text-indigo-400' : 'text-[var(--text-muted)]'} />
                     <span className="truncate">{item.label}</span>
                   </div>
 
                   {item.badge !== undefined && (
-                    <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)] font-mono border border-[var(--border-subtle)] shrink-0 ml-1">
+                    <Badge size="sm" variant={isActive ? 'purple' : 'neutral'}>
                       {item.badge}
-                    </span>
+                    </Badge>
                   )}
                 </button>
               )
@@ -169,9 +170,9 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* Footer Info */}
-      <div className="p-3 border-t border-[var(--border-subtle)] text-[11px] text-[var(--text-muted)] font-mono flex items-center justify-between">
-        <span>Tauri 2.0 Native</span>
-        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <div className="p-3 border-t border-[var(--border-subtle)] text-[11px] text-[var(--text-muted)] flex items-center justify-between">
+        <span>Bản quyền © 2026</span>
+        <span className="font-mono text-[10px]">v2.2.0</span>
       </div>
     </aside>
   )

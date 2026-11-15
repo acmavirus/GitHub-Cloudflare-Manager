@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { Send, Zap, Globe, KeyRound, CheckCircle2, XCircle, RotateCw, Loader2, Trash2 } from 'lucide-react'
+import { Send, Zap, KeyRound, Globe, Trash2, CheckCircle2 } from 'lucide-react'
 import { useAppStore } from '../../lib/useAppStore'
 import { http } from '../../lib/http'
 import { baiduApi } from '../baidu/api'
-import { IndexNowHistoryItem, BaiduProperty } from '../../types'
+import { IndexNowHistoryItem } from '../../types'
+import { Button, Input, Textarea, Badge, EmptyState } from '../../components/ui'
 
 export const FastIndexingHub: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'indexnow' | 'baidu'>('indexnow')
@@ -25,7 +26,6 @@ export const FastIndexingHub: React.FC = () => {
   const [baiduUrls, setBaiduUrls] = useState('')
   const [pushingBaidu, setPushingBaidu] = useState(false)
 
-  // Handle Domain Change for IndexNow
   const handleDomainChange = (val: string) => {
     setIndexnowDomain(val)
     setVerifyStatus(null)
@@ -35,7 +35,6 @@ export const FastIndexingHub: React.FC = () => {
     }
   }
 
-  // Verify Key on Domain for IndexNow
   const verifyKeyFile = async () => {
     const clean = indexnowDomain.trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0]
     if (!clean || !indexnowKey.trim()) return
@@ -68,7 +67,6 @@ export const FastIndexingHub: React.FC = () => {
     }
   }
 
-  // Submit IndexNow
   const handleSubmitIndexNow = async (e: React.FormEvent) => {
     e.preventDefault()
     const clean = indexnowDomain.trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0]
@@ -114,12 +112,12 @@ export const FastIndexingHub: React.FC = () => {
       if (historyItem.status === 'success') {
         addToast({
           type: 'success',
-          title: 'Submit IndexNow thành công',
+          title: 'Gửi thành công',
           message: `Đã gửi ${list.length} URLs tới các công cụ tìm kiếm.`,
         })
         setIndexnowUrls('')
       } else {
-        addToast({ type: 'error', title: 'Submit thất bại', message: `Mã lỗi HTTP ${res.status}` })
+        addToast({ type: 'error', title: 'Thất bại', message: `Mã lỗi HTTP ${res.status}` })
       }
     } catch (err: any) {
       addToast({ type: 'error', message: err.message })
@@ -128,7 +126,6 @@ export const FastIndexingHub: React.FC = () => {
     }
   }
 
-  // Push Baidu URLs
   const handlePushBaidu = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!baiduSiteUrl.trim() || !baiduToken.trim() || !baiduUrls.trim()) return
@@ -159,10 +156,10 @@ export const FastIndexingHub: React.FC = () => {
           lastPushAt: new Date().toISOString(),
         })
 
-        addToast({ type: 'success', title: 'Baidu Push thành công', message: res.message })
+        addToast({ type: 'success', title: 'Đẩy link thành công', message: res.message })
         setBaiduUrls('')
       } else {
-        addToast({ type: 'error', title: 'Baidu Push thất bại', message: res.message })
+        addToast({ type: 'error', title: 'Thất bại', message: res.message })
       }
     } catch (err: any) {
       addToast({ type: 'error', message: err.message })
@@ -176,12 +173,9 @@ export const FastIndexingHub: React.FC = () => {
       {/* Top Controls */}
       <div className="flex items-center justify-between pb-4 border-b border-[var(--border-subtle)] shrink-0">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <h2 className="text-sm font-semibold text-[var(--text-primary)]">
-              Fast Indexing Engine (Lập chỉ mục siêu tốc)
-            </h2>
-          </div>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+            Lập chỉ mục nhanh (Fast Indexing)
+          </h2>
         </div>
 
         {/* Tab switch */}
@@ -194,7 +188,7 @@ export const FastIndexingHub: React.FC = () => {
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
-            IndexNow (Bing / Yandex / Seznam)
+            IndexNow (Bing, Yandex, Seznam)
           </button>
           <button
             onClick={() => setActiveTab('baidu')}
@@ -212,7 +206,7 @@ export const FastIndexingHub: React.FC = () => {
       {activeTab === 'indexnow' ? (
         /* TAB 1: INDEXNOW */
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden mt-4">
-          <div className="lg:col-span-7 p-5 rounded-2xl glass-card space-y-4 overflow-y-auto">
+          <div className="lg:col-span-7 p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] space-y-4 overflow-y-auto">
             <h3 className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
               <Zap size={14} className="text-emerald-400" />
               <span>Gửi URL lập chỉ mục qua IndexNow</span>
@@ -222,26 +216,22 @@ export const FastIndexingHub: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-[11px] text-[var(--text-secondary)]">Tên miền (Host)</label>
-                  <input
-                    type="text"
+                  <Input
                     placeholder="example.com"
                     value={indexnowDomain}
                     onChange={(e) => handleDomainChange(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs font-mono text-[var(--text-primary)] outline-none"
                     required
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[11px] text-[var(--text-secondary)]">IndexNow API Key</label>
-                  <input
-                    type="text"
-                    placeholder="Khóa 32 ký tự hex"
+                  <Input
+                    placeholder="32 ký tự hex"
                     value={indexnowKey}
                     onChange={(e) => {
                       setIndexnowKey(e.target.value)
                       setVerifyStatus(null)
                     }}
-                    className="w-full px-3 py-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs font-mono text-[var(--text-primary)] outline-none"
                     required
                   />
                 </div>
@@ -251,66 +241,72 @@ export const FastIndexingHub: React.FC = () => {
                 <span className="font-mono text-[var(--text-muted)] truncate">
                   Tệp: https://{indexnowDomain || 'domain'}/{indexnowKey || 'key'}.txt
                 </span>
-                <button
+                <Button
                   type="button"
+                  size="sm"
+                  variant="outline"
                   onClick={verifyKeyFile}
-                  disabled={verifyingKey || !indexnowDomain || !indexnowKey}
-                  className="px-2.5 py-1 rounded bg-[var(--bg-elevated)] border border-[var(--border-mid)] text-xs text-[var(--text-primary)] flex items-center gap-1 shrink-0"
+                  isLoading={verifyingKey}
+                  disabled={!indexnowDomain || !indexnowKey}
                 >
-                  {verifyingKey ? <Loader2 size={12} className="animate-spin text-emerald-400" /> : null}
-                  <span>Xác minh</span>
-                </button>
+                  Xác minh
+                </Button>
               </div>
 
               {verifyStatus === 'success' && (
-                <div className="p-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-1">
+                <div className="p-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-1.5">
                   <CheckCircle2 size={13} />
-                  <span>Tệp khóa đã được xác thực chính xác!</span>
+                  <span>Tệp khóa đã được xác thực chính xác trên hosting.</span>
                 </div>
               )}
 
               <div className="space-y-1">
                 <label className="text-[11px] text-[var(--text-secondary)]">Danh sách URLs (mỗi URL một dòng)</label>
-                <textarea
-                  rows={6}
+                <Textarea
+                  rows={5}
                   placeholder={`https://${indexnowDomain || 'example.com'}/url-1&#10;https://${indexnowDomain || 'example.com'}/url-2`}
                   value={indexnowUrls}
                   onChange={(e) => setIndexnowUrls(e.target.value)}
-                  className="w-full p-2.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs font-mono text-[var(--text-primary)] outline-none resize-none"
                   required
                 />
               </div>
 
-              <button
+              <Button
                 type="submit"
-                disabled={submittingIndexNow}
-                className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-950 transition-colors"
+                variant="primary"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 shadow-emerald-950 border-emerald-500/30"
+                leftIcon={<Send size={13} />}
+                isLoading={submittingIndexNow}
               >
-                {submittingIndexNow ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                <span>Gửi URL tới IndexNow</span>
-              </button>
+                Gửi URL tới IndexNow
+              </Button>
             </form>
           </div>
 
-          <div className="lg:col-span-5 p-5 rounded-2xl glass-card flex flex-col overflow-hidden">
+          <div className="lg:col-span-5 p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
-              <h3 className="text-xs font-semibold text-[var(--text-primary)]">Lịch sử Submit IndexNow</h3>
+              <h3 className="text-xs font-semibold text-[var(--text-primary)]">Lịch sử gửi IndexNow</h3>
               {indexnowHistory.length > 0 && (
-                <button onClick={clearIndexnowHistory} className="text-[11px] text-[var(--text-muted)] hover:text-rose-400">
+                <Button variant="ghost" size="sm" onClick={clearIndexnowHistory} className="text-rose-400 h-6">
                   Xóa
-                </button>
+                </Button>
               )}
             </div>
 
             <div className="flex-1 overflow-y-auto mt-2 space-y-2 pr-1">
               {indexnowHistory.length === 0 ? (
-                <div className="py-16 text-center text-xs text-[var(--text-muted)]">Chưa có lịch sử submit.</div>
+                <EmptyState
+                  title="Chưa có lịch sử"
+                  description="Các lượt gửi URL qua IndexNow sẽ được lưu lại tại đây."
+                />
               ) : (
                 indexnowHistory.map((item) => (
                   <div key={item.id} className="p-2.5 rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs">
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-[var(--text-primary)] font-mono text-[11px]">{item.domain}</span>
-                      <span className="text-[10px] font-mono text-emerald-400">{item.message || 'Thành công'}</span>
+                      <Badge variant="success" size="sm">
+                        {item.message || 'Thành công'}
+                      </Badge>
                     </div>
                     <div className="text-[10px] text-[var(--text-muted)] mt-1 font-mono">
                       {item.urls.length} URLs • {new Date(item.timestamp).toLocaleTimeString('vi-VN')}
@@ -324,33 +320,30 @@ export const FastIndexingHub: React.FC = () => {
       ) : (
         /* TAB 2: BAIDU PUSH */
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden mt-4">
-          <div className="lg:col-span-7 p-5 rounded-2xl glass-card space-y-4 overflow-y-auto">
+          <div className="lg:col-span-7 p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] space-y-4 overflow-y-auto">
             <h3 className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
               <Zap size={14} className="text-blue-400" />
-              <span>Gửi URL lập chỉ mục qua Baidu Ziyuan Link Submission API</span>
+              <span>Gửi URL qua Baidu Ziyuan Link Submission API</span>
             </h3>
 
             <form onSubmit={handlePushBaidu} className="space-y-3.5">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-[11px] text-[var(--text-secondary)]">Website URL đã xác minh Baidu</label>
-                  <input
-                    type="text"
+                  <Input
                     placeholder="https://example.com"
                     value={baiduSiteUrl}
                     onChange={(e) => setBaiduSiteUrl(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs font-mono text-[var(--text-primary)] outline-none"
                     required
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[11px] text-[var(--text-secondary)]">Baidu Site Push Token</label>
-                  <input
+                  <Input
                     type="password"
                     placeholder="Token 16 ký tự"
                     value={baiduToken}
                     onChange={(e) => setBaiduToken(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs font-mono text-[var(--text-primary)] outline-none"
                     required
                   />
                 </div>
@@ -358,46 +351,56 @@ export const FastIndexingHub: React.FC = () => {
 
               <div className="space-y-1">
                 <label className="text-[11px] text-[var(--text-secondary)]">Danh sách URLs (mỗi URL một dòng)</label>
-                <textarea
-                  rows={6}
+                <Textarea
+                  rows={5}
                   placeholder={`https://example.com/bai-viet-1&#10;https://example.com/bai-viet-2`}
                   value={baiduUrls}
                   onChange={(e) => setBaiduUrls(e.target.value)}
-                  className="w-full p-2.5 rounded-lg bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs font-mono text-[var(--text-primary)] outline-none resize-none"
                   required
                 />
               </div>
 
-              <button
+              <Button
                 type="submit"
-                disabled={pushingBaidu}
-                className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-950 transition-colors"
+                variant="primary"
+                className="w-full bg-blue-600 hover:bg-blue-500 shadow-blue-950 border-blue-500/30"
+                leftIcon={<Send size={13} />}
+                isLoading={pushingBaidu}
               >
-                {pushingBaidu ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                <span>Đẩy URL tới Baidu Spider</span>
-              </button>
+                Đẩy URL tới Baidu Spider
+              </Button>
             </form>
           </div>
 
-          <div className="lg:col-span-5 p-5 rounded-2xl glass-card flex flex-col overflow-hidden">
+          <div className="lg:col-span-5 p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex flex-col overflow-hidden">
             <div className="pb-3 border-b border-[var(--border-subtle)]">
-              <h3 className="text-xs font-semibold text-[var(--text-primary)]">Websites Baidu đã lưu ({baiduProperties.length})</h3>
+              <h3 className="text-xs font-semibold text-[var(--text-primary)]">
+                Websites Baidu đã lưu ({baiduProperties.length})
+              </h3>
             </div>
 
             <div className="flex-1 overflow-y-auto mt-2 space-y-2 pr-1">
               {baiduProperties.length === 0 ? (
-                <div className="py-16 text-center text-xs text-[var(--text-muted)]">Chưa có website Baidu nào được lưu.</div>
+                <EmptyState
+                  title="Chưa có website Baidu nào"
+                  description="Thêm URL và Token ở form bên cạnh để bắt đầu đẩy link."
+                />
               ) : (
                 baiduProperties.map((p) => (
                   <div key={p.id} className="p-3 rounded-xl bg-[var(--bg-base)] border border-[var(--border-subtle)] text-xs space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-[var(--text-primary)] font-mono text-[11px]">{p.domain}</span>
-                      <button onClick={() => removeBaiduProperty(p.id)} className="text-[var(--text-muted)] hover:text-rose-400">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeBaiduProperty(p.id)}
+                        className="h-6 w-6 text-[var(--text-muted)] hover:text-rose-400"
+                      >
                         <Trash2 size={12} />
-                      </button>
+                      </Button>
                     </div>
                     <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)] font-mono pt-1">
-                      <span>Đã push: {p.pushedCount} URLs</span>
+                      <span>Đã gửi: {p.pushedCount} URLs</span>
                       <span className="text-blue-400 font-bold">Còn lại: {p.dailyRemain} lượt/ngày</span>
                     </div>
                   </div>

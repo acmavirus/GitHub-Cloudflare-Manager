@@ -1,7 +1,8 @@
 import React from 'react'
-import { Sun, Moon, LogOut, ShieldCheck } from 'lucide-react'
+import { Sun, Moon, LogOut } from 'lucide-react'
 import { GitHubIcon } from './Icons'
 import { useAppStore } from '../../lib/useAppStore'
+import { Button } from '../ui'
 
 export const Header: React.FC = () => {
   const { theme, toggleTheme, githubUser, setGithubToken, activeView } = useAppStore()
@@ -9,29 +10,29 @@ export const Header: React.FC = () => {
   const getViewTitle = () => {
     switch (activeView) {
       case 'github':
-        return { title: 'GitHub Repository Manager', desc: 'Quản lý repositories, metrics và commit' }
-      case 'cf-domains':
-        return { title: 'Cloudflare Domains & DNS', desc: 'Quản lý zones, DNS records và Bulk IP replacement' }
-      case 'cf-accounts':
-        return { title: 'Cloudflare Accounts', desc: 'Quản lý danh sách API Keys kết nối Cloudflare' }
-      case 'gsc':
-        return { title: 'Google Search Console Central', desc: 'Theo dõi thứ hạng tìm kiếm, Clicks, Impressions và Top Queries' }
-      case 'bing':
-        return { title: 'Bing Webmaster Tools', desc: 'Quản lý sites, hạn mức submit và truy vấn từ khóa trên Bing' }
-      case 'yandex':
-        return { title: 'Yandex Webmaster Hub', desc: 'Theo dõi chỉ số SQI (ИКС) và yêu cầu Re-crawl đường dẫn' }
-      case 'indexing-hub':
-        return { title: 'Fast Indexing Hub', desc: 'Lập chỉ mục siêu tốc qua IndexNow (Bing/Yandex) và Baidu Push API' }
-      case 'ga-manager':
-        return { title: 'Google Analytics 4', desc: 'Đồng bộ và quản lý properties GA4' }
-      case 'auditor':
-        return { title: 'Domain Auditor', desc: 'Kiểm tra trạng thái URL, mã phản hồi và Sitemap' }
+        return { title: 'GitHub Repositories', desc: 'Quản lý mã nguồn, metrics và commits' }
       case 'kanban':
-        return { title: 'Kanban Tasks', desc: 'Bảng theo dõi tiến độ công việc gắn với Repos' }
+        return { title: 'Bảng công việc Kanban', desc: 'Theo dõi tiến độ phát triển dự án' }
+      case 'cf-domains':
+        return { title: 'Cloudflare Domains & DNS', desc: 'Quản lý zones và bản ghi DNS' }
+      case 'cf-accounts':
+        return { title: 'Tài khoản Cloudflare', desc: 'Danh sách kết nối API Cloudflare' }
+      case 'gsc':
+        return { title: 'Google Search Console', desc: 'Hiệu suất tìm kiếm, lượt click và thứ hạng từ khóa' }
+      case 'bing':
+        return { title: 'Bing Webmaster Tools', desc: 'Quản lý tên miền và số liệu tìm kiếm Bing' }
+      case 'yandex':
+        return { title: 'Yandex Webmaster', desc: 'Theo dõi chất lượng website và chỉ mục Yandex' }
+      case 'indexing-hub':
+        return { title: 'Lập chỉ mục nhanh (Fast Indexing)', desc: 'Gửi URL tức thì tới công cụ tìm kiếm' }
+      case 'ga-manager':
+        return { title: 'Google Analytics 4', desc: 'Quản lý mã đo lường và theo dõi lưu lượng' }
+      case 'auditor':
+        return { title: 'Kiểm toán Tên miền (Domain Auditor)', desc: 'Kiểm tra trạng thái HTTP và sitemap website' }
       case 'settings':
-        return { title: 'System Settings', desc: 'Cấu hình hệ thống và dữ liệu lưu trữ' }
+        return { title: 'Cài đặt hệ thống', desc: 'Tùy chọn giao diện và dữ liệu ứng dụng' }
       default:
-        return { title: 'GITCORE Hub', desc: 'DevOps & Site Operations Dashboard' }
+        return { title: 'Bảng điều khiển', desc: 'Trung tâm quản trị website & DevOps' }
     }
   }
 
@@ -51,11 +52,11 @@ export const Header: React.FC = () => {
       <div className="flex items-center gap-3">
         {/* GitHub User Profile if connected */}
         {githubUser ? (
-          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)]">
+          <div className="flex items-center gap-2.5 px-3 py-1 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] shadow-sm">
             <img
               src={githubUser.avatar_url}
               alt={githubUser.login}
-              className="w-6 h-6 rounded-full border border-indigo-500/30"
+              className="w-5 h-5 rounded-full border border-indigo-500/30"
             />
             <span className="text-xs font-medium text-[var(--text-primary)]">
               {githubUser.login}
@@ -65,33 +66,34 @@ export const Header: React.FC = () => {
             </span>
             <button
               onClick={() => setGithubToken(null)}
-              title="Đăng xuất GitHub"
-              className="p-1 rounded hover:bg-rose-500/15 hover:text-rose-400 text-[var(--text-muted)] transition-colors ml-1"
+              title="Đăng xuất"
+              className="p-1 rounded-md hover:bg-rose-500/15 hover:text-rose-400 text-[var(--text-muted)] transition-colors ml-1"
             >
-              <LogOut size={13} />
+              <LogOut size={12} />
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-muted)] font-mono">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-muted)]">
             <GitHubIcon size={13} />
-            <span>Chưa đăng nhập</span>
+            <span>Chưa kết nối GitHub</span>
           </div>
         )}
 
-        {/* Security Badge */}
-        <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-mono">
-          <ShieldCheck size={13} />
-          <span>Native IPC</span>
+        {/* Trạng thái hệ thống sạch sẽ */}
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Sẵn sàng</span>
         </div>
 
-        {/* Theme Toggle */}
-        <button
+        {/* Theme Toggle Button */}
+        <Button
+          variant="outline"
+          size="icon"
           onClick={toggleTheme}
-          title={theme === 'dark' ? 'Chuyển sang Giao diện sáng' : 'Chuyển sang Giao diện tối'}
-          className="w-8 h-8 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-mid)] transition-colors"
+          title={theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
         >
-          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-        </button>
+          {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+        </Button>
       </div>
     </header>
   )
