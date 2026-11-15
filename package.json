@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.5",
+    "@tauri-apps/cli": "^2.12.4",
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -23,6 +24,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.107.1",
+    "@tauri-apps/api": "^2.12.4",
     "@tauri-apps/plugin-clipboard-manager": "^2.5.0",
     "@tauri-apps/plugin-http": "^2.9.0",
     "@tauri-apps/plugin-notification": "^2.8.1",
