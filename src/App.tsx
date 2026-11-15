@@ -12,7 +12,10 @@ import { GitHubManager } from './features/github/GitHubManager'
 import { CloudflareDomains } from './features/cloudflare/CloudflareDomains'
 import { CloudflareAccounts } from './features/cloudflare/CloudflareAccounts'
 import { GoogleAnalyticsManager } from './features/analytics/GoogleAnalytics'
-import { IndexNowSubmitter } from './features/indexnow/IndexNowSubmitter'
+import { GoogleSearchConsole } from './features/gsc/GoogleSearchConsole'
+import { BingWebmaster } from './features/bing/BingWebmaster'
+import { YandexWebmaster } from './features/yandex/YandexWebmaster'
+import { FastIndexingHub } from './features/indexing/FastIndexingHub'
 import { DomainAuditor } from './features/auditor/DomainAuditor'
 import { KanbanBoard } from './features/kanban/KanbanBoard'
 import { SettingsView } from './features/settings/SettingsView'
@@ -38,7 +41,7 @@ export const AppContent: React.FC = () => {
       <div className="w-screen h-screen flex items-center justify-center bg-[var(--bg-void)] text-xs text-[var(--text-muted)] font-mono">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
-          <span>Khởi động GITCORE Tauri Engine...</span>
+          <span>Khởi động GITCORE Webmaster Engine...</span>
         </div>
       </div>
     )
@@ -48,18 +51,24 @@ export const AppContent: React.FC = () => {
     switch (activeView) {
       case 'github':
         return githubToken ? <GitHubManager /> : <GitHubAuth />
+      case 'kanban':
+        return <KanbanBoard />
       case 'cf-domains':
         return <CloudflareDomains />
       case 'cf-accounts':
         return <CloudflareAccounts />
+      case 'gsc':
+        return <GoogleSearchConsole />
+      case 'bing':
+        return <BingWebmaster />
+      case 'yandex':
+        return <YandexWebmaster />
+      case 'indexing-hub':
+        return <FastIndexingHub />
       case 'ga-manager':
         return <GoogleAnalyticsManager />
-      case 'indexnow':
-        return <IndexNowSubmitter />
       case 'auditor':
         return <DomainAuditor />
-      case 'kanban':
-        return <KanbanBoard />
       case 'settings':
         return <SettingsView />
       default:

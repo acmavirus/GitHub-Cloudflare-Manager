@@ -7,6 +7,11 @@ import {
   KanbanTask,
   IndexNowHistoryItem,
   Toast,
+  GSCAccount,
+  GSCProperty,
+  BingAccount,
+  YandexAccount,
+  BaiduProperty,
 } from '../types'
 import { appStorage } from './store'
 
@@ -39,6 +44,33 @@ interface AppState {
   setCfAccounts: (accounts: CloudflareAccount[]) => void
   addCfAccount: (account: CloudflareAccount) => void
   removeCfAccount: (id: string) => void
+
+  // Google Search Console (GSC)
+  gscAccounts: GSCAccount[]
+  setGscAccounts: (accounts: GSCAccount[]) => void
+  addGscAccount: (account: GSCAccount) => void
+  removeGscAccount: (id: string) => void
+  gscProperties: GSCProperty[]
+  setGscProperties: (props: GSCProperty[]) => void
+  upsertGscProperty: (prop: GSCProperty) => void
+
+  // Bing Webmaster
+  bingAccounts: BingAccount[]
+  setBingAccounts: (accounts: BingAccount[]) => void
+  addBingAccount: (account: BingAccount) => void
+  removeBingAccount: (id: string) => void
+
+  // Yandex Webmaster
+  yandexAccounts: YandexAccount[]
+  setYandexAccounts: (accounts: YandexAccount[]) => void
+  addYandexAccount: (account: YandexAccount) => void
+  removeYandexAccount: (id: string) => void
+
+  // Baidu Ziyuan Push
+  baiduProperties: BaiduProperty[]
+  setBaiduProperties: (props: BaiduProperty[]) => void
+  upsertBaiduProperty: (prop: BaiduProperty) => void
+  removeBaiduProperty: (id: string) => void
 
   // Google Analytics
   gaProperties: GAProperty[]
@@ -119,6 +151,92 @@ export const useAppStore = create<AppState>((set, get) => ({
   removeCfAccount: (id) => {
     const next = get().cfAccounts.filter((a) => a.id !== id)
     get().setCfAccounts(next)
+  },
+
+  // Google Search Console (GSC)
+  gscAccounts: [],
+  setGscAccounts: (gscAccounts) => {
+    set({ gscAccounts })
+    appStorage.set('gsc_accounts', gscAccounts)
+  },
+  addGscAccount: (account) => {
+    const next = [...get().gscAccounts, account]
+    get().setGscAccounts(next)
+  },
+  removeGscAccount: (id) => {
+    const next = get().gscAccounts.filter((a) => a.id !== id)
+    get().setGscAccounts(next)
+    // cũng lọc bớt properties của account này
+    const nextProps = get().gscProperties.filter((p) => p.accountId !== id)
+    get().setGscProperties(nextProps)
+  },
+  gscProperties: [],
+  setGscProperties: (gscProperties) => {
+    set({ gscProperties })
+    appStorage.set('gsc_properties', gscProperties)
+  },
+  upsertGscProperty: (prop) => {
+    const existing = get().gscProperties
+    const index = existing.findIndex((p) => p.accountId === prop.accountId && p.siteUrl === prop.siteUrl)
+    let next: GSCProperty[]
+    if (index >= 0) {
+      next = existing.map((p, i) => (i === index ? { ...p, ...prop } : p))
+    } else {
+      next = [...existing, prop]
+    }
+    get().setGscProperties(next)
+  },
+
+  // Bing Webmaster
+  bingAccounts: [],
+  setBingAccounts: (bingAccounts) => {
+    set({ bingAccounts })
+    appStorage.set('bing_accounts', bingAccounts)
+  },
+  addBingAccount: (account) => {
+    const next = [...get().bingAccounts, account]
+    get().setBingAccounts(next)
+  },
+  removeBingAccount: (id) => {
+    const next = get().bingAccounts.filter((a) => a.id !== id)
+    get().setBingAccounts(next)
+  },
+
+  // Yandex Webmaster
+  yandexAccounts: [],
+  setYandexAccounts: (yandexAccounts) => {
+    set({ yandexAccounts })
+    appStorage.set('yandex_accounts', yandexAccounts)
+  },
+  addYandexAccount: (account) => {
+    const next = [...get().yandexAccounts, account]
+    get().setYandexAccounts(next)
+  },
+  removeYandexAccount: (id) => {
+    const next = get().yandexAccounts.filter((a) => a.id !== id)
+    get().setYandexAccounts(next)
+  },
+
+  // Baidu Ziyuan Push
+  baiduProperties: [],
+  setBaiduProperties: (baiduProperties) => {
+    set({ baiduProperties })
+    appStorage.set('baidu_properties', baiduProperties)
+  },
+  upsertBaiduProperty: (prop) => {
+    const existing = get().baiduProperties
+    const index = existing.findIndex((p) => p.siteUrl === prop.siteUrl)
+    let next: BaiduProperty[]
+    if (index >= 0) {
+      next = existing.map((p, i) => (i === index ? { ...p, ...prop } : p))
+    } else {
+      next = [...existing, prop]
+    }
+    get().setBaiduProperties(next)
+  },
+  removeBaiduProperty: (id) => {
+    const next = get().baiduProperties.filter((p) => p.id !== id)
+    get().setBaiduProperties(next)
   },
 
   // Google Analytics
@@ -222,6 +340,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       const token = await appStorage.get<string | null>('github_token', null)
       const cfAccounts = await appStorage.get<CloudflareAccount[]>('cf_accounts', [])
+      const gscAccounts = await appStorage.get<GSCAccount[]>('gsc_accounts', [])
+      const gscProperties = await appStorage.get<GSCProperty[]>('gsc_properties', [])
+      const bingAccounts = await appStorage.get<BingAccount[]>('bing_accounts', [])
+      const yandexAccounts = await appStorage.get<YandexAccount[]>('yandex_accounts', [])
+      const baiduProperties = await appStorage.get<BaiduProperty[]>('baidu_properties', [])
       const gaProperties = await appStorage.get<GAProperty[]>('ga_properties', [])
       const indexnowKeys = await appStorage.get<Record<string, string>>('indexnow_keys', {})
       const indexnowHistory = await appStorage.get<IndexNowHistoryItem[]>('indexnow_history', [])
@@ -231,6 +354,11 @@ export const useAppStore = create<AppState>((set, get) => ({
         theme,
         githubToken: token,
         cfAccounts,
+        gscAccounts,
+        gscProperties,
+        bingAccounts,
+        yandexAccounts,
+        baiduProperties,
         gaProperties,
         indexnowKeys,
         indexnowHistory,

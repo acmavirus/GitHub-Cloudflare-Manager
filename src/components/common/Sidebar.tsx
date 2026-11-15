@@ -1,69 +1,114 @@
 import React from 'react'
 import {
   FolderGit2,
+  KanbanSquare,
   Globe2,
   KeyRound,
+  Search,
+  Compass,
+  Award,
+  Zap,
   BarChart3,
-  Send,
   SearchCode,
-  KanbanSquare,
   Settings,
 } from 'lucide-react'
 import { useAppStore } from '../../lib/useAppStore'
 import { ActiveView } from '../../types'
 
-interface NavItem {
-  id: ActiveView
-  label: string
-  icon: React.ElementType
-  badge?: number | string
+interface NavSection {
+  title: string
+  items: {
+    id: ActiveView
+    label: string
+    icon: React.ElementType
+    badge?: number | string
+  }[]
 }
 
 export const Sidebar: React.FC = () => {
-  const { activeView, setActiveView, cfAccounts, kanbanTasks } = useAppStore()
+  const { activeView, setActiveView, cfAccounts, kanbanTasks, gscProperties, bingAccounts, yandexAccounts } =
+    useAppStore()
 
-  const navItems: NavItem[] = [
+  const sections: NavSection[] = [
     {
-      id: 'github',
-      label: 'GitHub Repos',
-      icon: FolderGit2,
+      title: 'DevOps & Code',
+      items: [
+        {
+          id: 'github',
+          label: 'GitHub Repos',
+          icon: FolderGit2,
+        },
+        {
+          id: 'kanban',
+          label: 'Kanban Tasks',
+          icon: KanbanSquare,
+          badge: kanbanTasks.length > 0 ? kanbanTasks.length : undefined,
+        },
+      ],
     },
     {
-      id: 'cf-domains',
-      label: 'Cloudflare Domains',
-      icon: Globe2,
+      title: 'Domains & Cloud',
+      items: [
+        {
+          id: 'cf-domains',
+          label: 'Cloudflare DNS',
+          icon: Globe2,
+        },
+        {
+          id: 'cf-accounts',
+          label: 'Cloudflare Accounts',
+          icon: KeyRound,
+          badge: cfAccounts.length > 0 ? cfAccounts.length : undefined,
+        },
+      ],
     },
     {
-      id: 'cf-accounts',
-      label: 'Cloudflare Accounts',
-      icon: KeyRound,
-      badge: cfAccounts.length > 0 ? cfAccounts.length : undefined,
+      title: 'Search Engines & SEO',
+      items: [
+        {
+          id: 'gsc',
+          label: 'Google Search Console',
+          icon: Search,
+          badge: gscProperties.length > 0 ? gscProperties.length : undefined,
+        },
+        {
+          id: 'bing',
+          label: 'Bing Webmaster',
+          icon: Compass,
+          badge: bingAccounts.length > 0 ? bingAccounts.length : undefined,
+        },
+        {
+          id: 'yandex',
+          label: 'Yandex Webmaster',
+          icon: Award,
+          badge: yandexAccounts.length > 0 ? yandexAccounts.length : undefined,
+        },
+        {
+          id: 'indexing-hub',
+          label: 'Fast Indexing Hub',
+          icon: Zap,
+        },
+        {
+          id: 'ga-manager',
+          label: 'Google Analytics 4',
+          icon: BarChart3,
+        },
+      ],
     },
     {
-      id: 'ga-manager',
-      label: 'Google Analytics 4',
-      icon: BarChart3,
-    },
-    {
-      id: 'indexnow',
-      label: 'IndexNow Submitter',
-      icon: Send,
-    },
-    {
-      id: 'auditor',
-      label: 'Domain Auditor',
-      icon: SearchCode,
-    },
-    {
-      id: 'kanban',
-      label: 'Kanban Tasks',
-      icon: KanbanSquare,
-      badge: kanbanTasks.length > 0 ? kanbanTasks.length : undefined,
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: Settings,
+      title: 'Diagnostics & System',
+      items: [
+        {
+          id: 'auditor',
+          label: 'Domain Auditor',
+          icon: SearchCode,
+        },
+        {
+          id: 'settings',
+          label: 'System Settings',
+          icon: Settings,
+        },
+      ],
     },
   ]
 
@@ -79,49 +124,53 @@ export const Sidebar: React.FC = () => {
             GITCORE
           </div>
           <div className="text-[11px] text-[var(--text-muted)] font-mono">
-            v2.0 • Desktop Hub
+            v2.1 • Webmaster Suite
           </div>
         </div>
       </div>
 
-      {/* Navigation List */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        <div className="text-[10px] font-semibold tracking-wider text-[var(--text-muted)] uppercase px-3 py-2">
-          Management
-        </div>
+      {/* Navigation Groups */}
+      <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
+        {sections.map((sec, idx) => (
+          <div key={idx} className="space-y-1">
+            <div className="text-[10px] font-bold tracking-wider text-[var(--text-muted)] uppercase px-3 py-1">
+              {sec.title}
+            </div>
 
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const isActive = activeView === item.id
+            {sec.items.map((item) => {
+              const Icon = item.icon
+              const isActive = activeView === item.id
 
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveView(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
-                isActive
-                  ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.15)]'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] border border-transparent'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Icon size={16} className={isActive ? 'text-indigo-400' : 'text-[var(--text-muted)]'} />
-                <span>{item.label}</span>
-              </div>
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveView(item.id)}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                    isActive
+                      ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.15)] font-semibold'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] border border-transparent'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 truncate">
+                    <Icon size={15} className={isActive ? 'text-indigo-400' : 'text-[var(--text-muted)]'} />
+                    <span className="truncate">{item.label}</span>
+                  </div>
 
-              {item.badge !== undefined && (
-                <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)] font-mono border border-[var(--border-subtle)]">
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          )
-        })}
+                  {item.badge !== undefined && (
+                    <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)] font-mono border border-[var(--border-subtle)] shrink-0 ml-1">
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        ))}
       </nav>
 
       {/* Footer Info */}
       <div className="p-3 border-t border-[var(--border-subtle)] text-[11px] text-[var(--text-muted)] font-mono flex items-center justify-between">
-        <span>Tauri Native Engine</span>
+        <span>Tauri 2.0 Native</span>
         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
       </div>
     </aside>

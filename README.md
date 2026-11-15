@@ -1,96 +1,66 @@
-# GITCORE v2.0 — Premium Dev & Site Management Hub 🚀
+# GITCORE v2.2 — Ultimate Webmaster & DevOps Desktop Suite 🚀
 
-**GITCORE v2.0** là thế hệ ứng dụng máy tính (Desktop App) thế hệ mới được tái thiết kế toàn diện trên nền tảng **Tauri 2.0 (Rust) + React 19 + TypeScript + Tailwind CSS**. 
+**GITCORE v2.2** là trung tâm điều hành desktop tất cả-trong-một (All-in-One Desktop Hub) được xây dựng trên nền tảng **Tauri 2.0 (Rust) + React 19 + TypeScript + Tailwind CSS**. 
 
-Ứng dụng gom toàn bộ tác vụ vận hành website & DevOps hàng ngày của bạn vào một giao diện Cyberpunk Glassmorphism mượt mà: quản lý GitHub repositories, cấu hình Cloudflare DNS đa tài khoản, đo lường Google Analytics 4, lập chỉ mục tìm kiếm siêu tốc IndexNow, kiểm toán sitemap domain và quản lý tiến độ Kanban.
+Ứng dụng tích hợp toàn diện hệ sinh thái quản trị hạ tầng website và bộ công cụ tìm kiếm lớn nhất thế giới vào một bảng điều khiển duy nhất.
 
 ---
 
-## ✨ Điểm nổi bật phiên bản v2.0
+## 🧭 Kiến trúc Điều hướng & Module Chức năng
 
-- ⚡ **Siêu nhẹ & Tiết kiệm tài nguyên**: Kích thước file cài đặt chỉ **~10-15MB**, mức tiêu hao RAM chỉ **~35-50MB** (thay vì 100MB+ và 200MB RAM của kiến trúc Python PyWebView cũ).
-- 🛡️ **Bypass CORS tự nhiên (Direct Socket)**: Sử dụng `@tauri-apps/plugin-http` của Tauri 2.0 để gọi trực tiếp tới Cloudflare API, GitHub API, IndexNow và các máy chủ bên ngoài từ tầng Rust Native — **không cần proxy trung gian, không bị chặn CORS**.
-- 🧩 **Kiến trúc Feature-Driven**: Toàn bộ mã nguồn monolithic 4,600 dòng đã được phân tách thành các module React + TypeScript độc lập, kiểu dữ liệu chặt chẽ và an toàn tuyệt đối.
-- 💾 **Lưu trữ cấu hình bền vững**: Sử dụng `@tauri-apps/plugin-store` lưu trực tiếp vào hệ thống file `AppData` của máy, không lo mất dữ liệu khi xóa cache trình duyệt.
+### 🐙 1. DevOps & Code
+- **GitHub Repository Manager**: Quản lý repos, xem commit & branch metrics, inline rename, copy lệnh `git clone`, xóa an toàn và xóa hàng loạt (Bulk Delete). Khám phá GitHub Trending repos theo Daily / Weekly / Monthly.
+- **Kanban Task Manager**: Bảng theo dõi công việc 4 cột (To Do, In Progress, Review, Done) liên kết trực tiếp với từng repository.
+
+### ☁️ 2. Domains & Cloud
+- **Cloudflare Domains & DNS Manager**: Quản lý các Zones và bản ghi DNS (A, AAAA, CNAME, TXT, MX, NS...).
+- **Tính năng độc quyền Bulk IP Replacement**: Quét và thay thế địa chỉ IP máy chủ cũ sang mới trên hàng loạt tên miền chỉ với 1 cú click.
+- **Cloudflare Multi-Accounts**: Quản lý và chuyển đổi nhanh giữa nhiều tài khoản Cloudflare Global API Keys.
+
+### 🌐 3. Search Engines & Webmaster Suite *(Tích hợp từ GSC Dashboard)*
+- **🔍 Google Search Console (GSC) Central**:
+  - Hỗ trợ kết nối qua **Google Service Account JSON Key** hoặc OAuth Access Token.
+  - Tự động quét và liệt kê toàn bộ các website được cấp quyền trên Google Search Console.
+  - Báo cáo số liệu 28 ngày: **Clicks**, **Lượt Hiển thị (Impressions)**, **CTR**, **Vị trí trung bình**.
+  - Bảng xếp hạng **Top Từ Khóa (Top Queries)** và **Top Trang Đích (Top Pages)**.
+- **🟦 Bing Webmaster Tools**:
+  - Kết nối qua Bing Webmaster API Key.
+  - Quản lý danh sách website, xem hạn mức submit URL hàng ngày (Submission Quota).
+  - Bảng thống kê từ khóa và thứ hạng trên Bing.
+  - Gửi URL lập chỉ mục tức thì tới Bing Bot (`SubmitUrl` & `SubmitUrlBatch`).
+- **🔴 Yandex Webmaster Hub**:
+  - Kết nối qua Yandex OAuth Token.
+  - Quản lý danh sách website, xem **Chỉ số chất lượng SQI (ИКС)** và số trang đã lập chỉ mục.
+  - Gửi yêu cầu Yandex Bot quét lại đường dẫn tức thì (Re-crawl Queue).
+- **⚡ Fast Indexing Hub**:
+  - **IndexNow Engine**: Submit URL tức thì tới Bing, Yandex, Seznam, Naver... kèm kiểm tra tệp xác minh key trên hosting.
+  - **Baidu Ziyuan Push Engine**: Đẩy link trực tiếp tới Baidu Spider qua Site Push Token và quản lý hạn mức hàng ngày.
+- **📊 Google Analytics 4 (GA4)**:
+  - Quản lý Measurement ID và lấy nhanh đoạn mã nhúng `gtag.js`.
+
+### 🔍 4. Diagnostics & System
+- **Domain Auditor & Sitemap Checker**: Trích xuất URLs từ Sitemap XML, kiểm tra đa luồng HTTP status, thời gian phản hồi, kích thước, tiêu đề SEO và xuất báo cáo ra CSV.
+- **System Settings**: Quản lý giao diện Cyber Dark / Light, xem thông số động cơ native và dọn sạch bộ nhớ ứng dụng.
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Desktop Runtime**: [Tauri 2.0](https://tauri.app/) (Rust 1.90+)
-- **Frontend Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Vite 7](https://vitejs.dev/)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) (Custom Cyber Dark / Light Glass Design System)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **State & Caching**: [Zustand](https://zustand-demo.pmnd.rs/) + [TanStack React Query v5](https://tanstack.com/query/latest)
-- **Native Plugins**:
-  - `@tauri-apps/plugin-http` (CORS-free HTTP requests)
-  - `@tauri-apps/plugin-store` (Persistent Key-Value Storage)
-  - `@tauri-apps/plugin-clipboard-manager` (Clipboard integration)
-  - `@tauri-apps/plugin-opener` (Default system browser launcher)
-  - `@tauri-apps/plugin-notification` (System desktop notifications)
+- **Desktop Engine**: [Tauri 2.0](https://tauri.app/) (Rust Native)
+- **Frontend**: [React 19](https://react.dev/) + [TypeScript 5](https://www.typescriptlang.org/) + [Vite 7](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) (Cyber Glass Design System)
+- **Crypto & Security**: `jose` (Web Crypto JWT signing cho Google Service Account)
+- **State & Data**: [Zustand](https://zustand-demo.pmnd.rs/) + [TanStack React Query v5](https://tanstack.com/)
+- **Storage**: `@tauri-apps/plugin-store` (Offline-first persistent storage trên AppData)
 
 ---
 
-## 🚀 Hướng dẫn phát triển & Khởi chạy
+## 🚀 Hướng dẫn khởi chạy
 
-### Yêu cầu hệ thống
-1. **Node.js**: v18+ (khuyên dùng v20 hoặc v22)
-2. **Rust & Cargo**: v1.78+ ([Tải Rustup](https://rustup.rs/))
-3. **Microsoft C++ Build Tools** (trên Windows)
-
-### 1. Cài đặt dependencies
-```bash
-npm install
-```
-
-### 2. Chạy ứng dụng Desktop ở chế độ Development
-Lệnh này sẽ khởi động Vite dev server và mở ngay cửa sổ ứng dụng Desktop:
-```bash
+```powershell
+# Chạy ứng dụng Desktop ở chế độ Development
 npm run tauri dev
-```
 
-*(Hoặc nếu chỉ muốn chạy giao diện trên trình duyệt web: `npm run dev`)*
-
-### 3. Đóng gói ứng dụng Desktop (.exe / .msi)
-Lệnh này sẽ biên dịch mã nguồn Rust và đóng gói thành file cài đặt độc lập:
-```bash
+# Đóng gói bản cài đặt độc lập (.exe)
 npm run tauri build
 ```
-File cài đặt hoàn thiện sẽ nằm tại thư mục: `src-tauri/target/release/bundle/`.
-
----
-
-## 📦 Danh sách Module chức năng
-
-1. **GitHub Repository Manager**:
-   - Xác thực an toàn qua Personal Access Token (PAT).
-   - Đổi tên trực tiếp (Inline Rename), sao chép lệnh `git clone` 1-click.
-   - Xóa đơn lẻ và **Xóa hàng loạt (Bulk Delete)** an toàn với hộp thoại xác nhận.
-   - Khám phá bảng xếp hạng **GitHub Trending** (Daily / Weekly / Monthly).
-
-2. **Cloudflare Domains & DNS Manager**:
-   - Quản lý đa tài khoản Cloudflare qua Global API Key.
-   - Quản lý Zones và danh sách bản ghi DNS (A, AAAA, CNAME, TXT, MX, NS...).
-   - **Tính năng độc quyền Bulk IP Replacement**: Tự động tìm và thay thế địa chỉ IP cũ sang IP mới cho toàn bộ tên miền khi chuyển đổi máy chủ.
-
-3. **Google Analytics 4**:
-   - Quản lý danh sách Properties và Measurement ID.
-   - 1-Click sao chép đoạn mã nhúng `gtag.js`.
-
-4. **IndexNow Submitter**:
-   - Gửi yêu cầu lập chỉ mục tức thì tới Bing, Yandex, Seznam.
-   - Kiểm tra và xác thực file key trên hosting/tên miền.
-   - Lưu trữ lịch sử submit.
-
-5. **Domain Auditor & URL Checker**:
-   - Tự động trích xuất URLs từ file XML Sitemap.
-   - Kiểm tra mã trạng thái HTTP, độ trễ phản hồi (ms), dung lượng trang và thẻ tiêu đề SEO.
-   - Xuất toàn bộ báo cáo kiểm toán ra định dạng CSV.
-
-6. **Kanban Tasks**:
-   - Bảng quản lý tiến độ 4 cột (To Do, In Progress, Review, Done).
-   - Gắn công việc với từng repository cụ thể và thiết lập độ ưu tiên.
-
-7. **System Settings**:
-   - Chuyển đổi linh hoạt giao diện Cyber Dark / Light.
-   - Kiểm tra trạng thái runtime và khôi phục cài đặt gốc an toàn.

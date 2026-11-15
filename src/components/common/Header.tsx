@@ -14,10 +14,16 @@ export const Header: React.FC = () => {
         return { title: 'Cloudflare Domains & DNS', desc: 'Quản lý zones, DNS records và Bulk IP replacement' }
       case 'cf-accounts':
         return { title: 'Cloudflare Accounts', desc: 'Quản lý danh sách API Keys kết nối Cloudflare' }
+      case 'gsc':
+        return { title: 'Google Search Console Central', desc: 'Theo dõi thứ hạng tìm kiếm, Clicks, Impressions và Top Queries' }
+      case 'bing':
+        return { title: 'Bing Webmaster Tools', desc: 'Quản lý sites, hạn mức submit và truy vấn từ khóa trên Bing' }
+      case 'yandex':
+        return { title: 'Yandex Webmaster Hub', desc: 'Theo dõi chỉ số SQI (ИКС) và yêu cầu Re-crawl đường dẫn' }
+      case 'indexing-hub':
+        return { title: 'Fast Indexing Hub', desc: 'Lập chỉ mục siêu tốc qua IndexNow (Bing/Yandex) và Baidu Push API' }
       case 'ga-manager':
         return { title: 'Google Analytics 4', desc: 'Đồng bộ và quản lý properties GA4' }
-      case 'indexnow':
-        return { title: 'IndexNow Submitter', desc: 'Submit URL siêu tốc tới công cụ tìm kiếm' }
       case 'auditor':
         return { title: 'Domain Auditor', desc: 'Kiểm tra trạng thái URL, mã phản hồi và Sitemap' }
       case 'kanban':

@@ -1,13 +1,124 @@
 // Navigation views
 export type ActiveView = 
   | 'github'
+  | 'kanban'
   | 'cf-domains'
   | 'cf-accounts'
+  | 'gsc'
+  | 'bing'
+  | 'yandex'
+  | 'indexing-hub'
   | 'ga-manager'
-  | 'indexnow'
   | 'auditor'
-  | 'kanban'
   | 'settings'
+
+// Google Search Console (GSC) Types
+export interface GSCAccount {
+  id: string
+  name: string
+  type: 'service_account' | 'token'
+  clientEmail?: string
+  privateKey?: string // PEM string
+  token?: string      // OAuth token
+  createdAt: string
+}
+
+export interface GSCDailyMetric {
+  date: string
+  clicks: number
+  impressions: number
+  ctr: number
+  position: number
+}
+
+export interface GSCQueryMetric {
+  query: string
+  clicks: number
+  impressions: number
+  ctr: number
+  position: number
+}
+
+export interface GSCPageMetric {
+  page: string
+  clicks: number
+  impressions: number
+  ctr: number
+  position: number
+}
+
+export interface GSCProperty {
+  id: string
+  accountId: string
+  siteUrl: string
+  domain: string
+  permissionLevel: string
+  clicks: number
+  impressions: number
+  ctr: number
+  position: number
+  dailyMetrics?: GSCDailyMetric[]
+  queryMetrics?: GSCQueryMetric[]
+  pageMetrics?: GSCPageMetric[]
+  lastSyncAt?: string
+}
+
+// Bing Webmaster Types
+export interface BingAccount {
+  id: string
+  name: string
+  apiKey: string
+  createdAt: string
+}
+
+export interface BingSite {
+  url: string
+  isVerified: boolean
+  role: string
+}
+
+export interface BingQueryStat {
+  query: string
+  clicks: number
+  impressions: number
+  avgClickPosition: number
+  avgImpressionPosition: number
+  date?: string
+}
+
+export interface BingQuota {
+  dailyQuota: number
+  monthlyQuota: number
+}
+
+// Yandex Webmaster Types
+export interface YandexAccount {
+  id: string
+  name: string
+  oauthToken: string
+  userId?: string
+  createdAt: string
+}
+
+export interface YandexHost {
+  hostId: string
+  asciiHostUrl: string
+  domain: string
+  sqi: number // ИКС
+  verified: boolean
+  indexedPagesCount: number
+}
+
+// Baidu Ziyuan Push Types
+export interface BaiduProperty {
+  id: string
+  siteUrl: string
+  domain: string
+  token: string
+  dailyRemain: number
+  pushedCount: number
+  lastPushAt?: string
+}
 
 // GitHub Types
 export interface GitHubUser {
